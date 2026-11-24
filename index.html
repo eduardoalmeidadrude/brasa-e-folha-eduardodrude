@@ -1,0 +1,2211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brasa &amp; Folha — Protótipo de Delivery (IHC)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            display: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#FDF3F1',
+              100: '#FCE4DF',
+              200: '#F8C6BC',
+              500: '#D94E38',
+              600: '#C83E2B',
+              700: '#A62F1F',
+              800: '#87271A',
+            },
+            leaf: {
+              50: '#EEF7F1',
+              100: '#D5ECD9',
+              600: '#1E5631',
+              700: '#174326',
+            },
+            cream: '#FAF8F5',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      --font-scale: 1;
+    }
+    html {
+      font-size: calc(16px * var(--font-scale));
+      scroll-behavior: smooth;
+    }
+    body {
+      background-color: #E7E5E4;
+      color: #1C1917;
+      font-family: 'Inter', system-ui, sans-serif;
+    }
+    .high-contrast {
+      --hc-bg: #000000;
+      --hc-card: #121212;
+      --hc-text: #FFFFFF;
+      --hc-accent: #FFD60A;
+    }
+    .high-contrast #app-shell {
+      background-color: #000000 !important;
+      color: #FFFFFF !important;
+    }
+    .high-contrast #app-shell .bg-white,
+    .high-contrast #app-shell .bg-cream,
+    .high-contrast #app-shell .bg-stone-50,
+    .high-contrast #app-shell .bg-stone-100 {
+      background-color: #141414 !important;
+      color: #FFFFFF !important;
+      border-color: #FFD60A !important;
+    }
+    .high-contrast #app-shell .text-stone-500,
+    .high-contrast #app-shell .text-stone-600,
+    .high-contrast #app-shell .text-stone-700,
+    .high-contrast #app-shell .text-stone-800,
+    .high-contrast #app-shell .text-stone-900 {
+      color: #FFFFFF !important;
+    }
+    .high-contrast #app-shell .bg-brand-600 {
+      background-color: #FFD60A !important;
+      color: #000000 !important;
+    }
+    .high-contrast #app-shell .text-brand-600 {
+      color: #FFD60A !important;
+    }
+
+    /* Custom scrollbar */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* Focus visibility for keyboard accessibility */
+    *:focus-visible {
+      outline: 3px solid #C83E2B;
+      outline-offset: 2px;
+    }
+
+    /* Device frame styles */
+    .viewport-mobile {
+      width: 390px;
+      max-width: 100%;
+      height: 820px;
+      border-radius: 36px;
+      border: 8px solid #1C1917;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.35);
+    }
+    .viewport-tablet {
+      width: 768px;
+      max-width: 100%;
+      height: 860px;
+      border-radius: 24px;
+      border: 8px solid #1C1917;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.28);
+    }
+    .viewport-desktop {
+      width: 100%;
+      max-width: 1120px;
+      min-height: 820px;
+      border-radius: 16px;
+      border: 1px solid #D6D3D1;
+      box-shadow: 0 12px 32px -10px rgba(0, 0, 0, 0.12);
+    }
+
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-view {
+      animation: fadeSlideUp 0.22s ease-out;
+    }
+    @keyframes pulseDot {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.4); opacity: 0.6; }
+    }
+    .pulse-dot {
+      animation: pulseDot 1.6s infinite;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- BARRA DE DEMONSTRAÇÃO IHC (Pode ser ocultada para capturas limpas do relatório) -->
+  <div id="ihc-toolbar" class="bg-stone-900 text-stone-100 px-4 py-2.5 text-xs border-b border-stone-800 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <span class="inline-flex items-center gap-1.5 bg-brand-600 text-white font-semibold px-2.5 py-1 rounded-full">
+          Protótipo IHC
+        </span>
+        <span class="text-stone-300 hidden sm:inline">Brasa &amp; Folha Delivery</span>
+      </div>
+
+      <!-- Seletor de telas para apresentação -->
+      <div class="flex items-center gap-1 flex-wrap" role="group" aria-label="Atalho entre interfaces do protótipo">
+        <button onclick="navigate('menu')" class="toolbar-nav px-2.5 py-1.5 rounded-md hover:bg-stone-800 transition" data-nav="menu">1. Cardápio</button>
+        <button onclick="openProductDemo()" class="toolbar-nav px-2.5 py-1.5 rounded-md hover:bg-stone-800 transition" data-nav="product">2. Produto</button>
+        <button onclick="navigate('cart')" class="toolbar-nav px-2.5 py-1.5 rounded-md hover:bg-stone-800 transition" data-nav="cart">3. Carrinho</button>
+        <button onclick="navigate('address')" class="toolbar-nav px-2.5 py-1.5 rounded-md hover:bg-stone-800 transition" data-nav="address">4. Endereço</button>
+        <button onclick="navigate('checkout')" class="toolbar-nav px-2.5 py-1.5 rounded-md hover:bg-stone-800 transition" data-nav="checkout">5. Pagamento</button>
+        <button onclick="openTrackingDemo()" class="toolbar-nav px-2.5 py-1.5 rounded-md hover:bg-stone-800 transition" data-nav="tracking">6. Pedido</button>
+      </div>
+
+      <!-- Controles multiplataforma e acessibilidade -->
+      <div class="flex items-center gap-1.5">
+        <div class="flex bg-stone-800 rounded-lg p-0.5" role="group" aria-label="Tamanho da tela">
+          <button onclick="setViewport('mobile')" id="vp-mobile" class="px-2 py-1 rounded-md bg-stone-700 text-white font-medium" title="Smartphone (390px)">Mobile</button>
+          <button onclick="setViewport('tablet')" id="vp-tablet" class="px-2 py-1 rounded-md text-stone-300 hover:text-white" title="Tablet (768px)">Tablet</button>
+          <button onclick="setViewport('desktop')" id="vp-desktop" class="px-2 py-1 rounded-md text-stone-300 hover:text-white" title="Desktop Responsivo">Desktop</button>
+        </div>
+        <button onclick="toggleAccessibility()" id="btn-a11y" class="px-2.5 py-1.5 rounded-md bg-stone-800 hover:bg-stone-700 text-stone-200" title="Alternar Alto Contraste e Fonte Maior">
+          A+ Contraste
+        </button>
+        <button onclick="simulateNetworkError()" class="px-2.5 py-1.5 rounded-md bg-stone-800 hover:bg-amber-900/60 text-amber-300" title="Testar tratamento de erro de conexão">
+          Testar Erro
+        </button>
+        <button onclick="toggleToolbar()" class="px-2 py-1.5 rounded-md text-stone-400 hover:text-white" title="Ocultar barra para print">
+          ✕
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Botão flutuante para reexibir a barra IHC quando ocultada -->
+  <button id="show-toolbar-btn" onclick="toggleToolbar()" class="hidden fixed bottom-3 right-3 z-50 bg-stone-900 text-white text-xs px-3 py-2 rounded-full shadow-lg hover:bg-stone-800">
+    Mostrar barra IHC
+  </button>
+
+  <!-- ÁREA PRINCIPAL COM MOLDURA DO DISPOSITIVO -->
+  <main class="flex-1 flex items-center justify-center p-3 sm:p-6">
+    <div id="app-shell" class="viewport-mobile bg-cream relative overflow-hidden flex flex-col transition-all duration-300">
+      <!-- Conteúdo dinâmico do aplicativo renderizado via JS -->
+      <div id="app-root" class="flex-1 flex flex-col h-full overflow-hidden relative"></div>
+
+      <!-- Toast de Feedback / Desfazer -->
+      <div id="toast-container" aria-live="polite" class="absolute bottom-24 left-4 right-4 z-40 pointer-events-none flex flex-col gap-2 items-center"></div>
+
+      <!-- Modal Global (Acesso rápido, Suporte, Erro de conexão) -->
+      <div id="modal-root" class="hidden absolute inset-0 z-50 bg-black/50 backdrop-blur-[1px] flex items-end sm:items-center justify-center p-0 sm:p-4"></div>
+    </div>
+  </main>
+
+  <script>
+    // =========================================================
+    // ÍCONES SVG INLINE (Confiáveis 100% offline e acessíveis)
+    // =========================================================
+    const ICONS = {
+      search: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`,
+      mapPin: `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`,
+      chevronDown: `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>`,
+      chevronRight: `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>`,
+      arrowLeft: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>`,
+      bag: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>`,
+      star: `<svg class="w-4 h-4 fill-amber-400 text-amber-400" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+      clock: `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+      heart: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>`,
+      heartFill: `<svg class="w-5 h-5 fill-brand-600 text-brand-600" viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>`,
+      plus: `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></svg>`,
+      minus: `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14"/></svg>`,
+      trash: `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>`,
+      edit: `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>`,
+      check: `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>`,
+      alert: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>`,
+      user: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+      home: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
+      receipt: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></svg>`,
+      card: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>`,
+      pix: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2 2 12l10 10 10-10L12 2Z"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>`,
+      cash: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>`,
+      bike: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>`,
+      chat: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
+      tag: `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><path d="M7 7h.01"/></svg>`,
+      flame: `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>`,
+      leaf: `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>`,
+      wifiOff: `<svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="2" x2="22" y1="2" y2="22"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><path d="M2 8.82a15 15 0 0 1 4.17-2.65"/><path d="M10.66 5c4.01-.36 8.14.9 11.34 3.76"/><path d="M16.85 11.25a10 10 0 0 1 2.22 1.68"/><path d="M5 13a10 10 0 0 1 5.24-2.76"/><line x1="12" x2="12.01" y1="20" y2="20"/></svg>`
+    };
+
+    // Fallback SVG para imagens caso esteja sem internet
+    function fallbackImg(title, bg = '#F5ECE6') {
+      const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='600' height='400'><rect width='100%' height='100%' fill='${bg}'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='22' fill='#A62F1F' font-weight='bold'>${title}</text></svg>`;
+      return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+    }
+
+    // =========================================================
+    // DADOS REALISTAS DO RESTAURANTE "BRASA & FOLHA"
+    // =========================================================
+    const CATEGORIES = [
+      { id: 'destaques', label: 'Destaques' },
+      { id: 'brasa', label: 'Na Brasa' },
+      { id: 'massas', label: 'Massas' },
+      { id: 'bowls', label: 'Bowls & Saladas' },
+      { id: 'sobremesas', label: 'Sobremesas' },
+      { id: 'bebidas', label: 'Bebidas' }
+    ];
+
+    const PRODUCTS = [
+      {
+        id: 'p1',
+        name: 'Ancho na Brasa com Risoto de Limão',
+        category: 'brasa',
+        featured: true,
+        popular: true,
+        vegetarian: false,
+        glutenFree: true,
+        promo: false,
+        price: 58.90,
+        prepTime: '25–30 min',
+        serves: 'Serve 1 pessoa',
+        shortDesc: 'Corte ancho grelhado na parrilla com risoto cremoso de limão-siciliano e ervas.',
+        fullDesc: 'Nosso carro-chefe: 240g de bife ancho selado na brasa de lenha frutífera, acompanhado de risoto arbóreo ao limão-siciliano, parmesão maturado e toque de azeite de alecrim.',
+        image: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80',
+        requiredOption: {
+          title: 'Ponto da carne',
+          choices: ['Mal passada', 'Ao ponto para mal', 'Ao ponto', 'Bem passada']
+        },
+        addons: [
+          { id: 'a1', name: 'Farofa crocante de castanha', price: 6.50 },
+          { id: 'a2', name: 'Molho chimichurri artesanal', price: 4.90 },
+          { id: 'a3', name: 'Legumes tostados na brasa', price: 11.00 }
+        ]
+      },
+      {
+        id: 'p2',
+        name: 'Sobrecoxa Desossada com Purê Rústico',
+        category: 'brasa',
+        featured: true,
+        popular: true,
+        vegetarian: false,
+        glutenFree: true,
+        promo: true,
+        oldPrice: 44.90,
+        price: 38.90,
+        prepTime: '20–25 min',
+        serves: 'Serve 1 pessoa',
+        shortDesc: 'Sobrecoxa marinada em ervas cítricas, purê rústico de batata e molho roti.',
+        fullDesc: 'Sobrecoxa desossada e dourada na brasa com pele crocante, marinada por 12h em tomilho e laranja. Acompanha purê cremoso de batata asterix com casca e molho roti reduzido.',
+        image: 'https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?auto=format&fit=crop&w=800&q=80',
+        requiredOption: {
+          title: 'Escolha o acompanhamento extra',
+          choices: ['Salada verde da casa', 'Arroz branco soltinho', 'Feijão tropeiro']
+        },
+        addons: [
+          { id: 'a4', name: 'Ovo caipira com gema mole', price: 5.50 },
+          { id: 'a5', name: 'Batata rústica com páprica', price: 9.90 }
+        ]
+      },
+      {
+        id: 'p3',
+        name: 'Fettuccine Artesanal ao Pesto & Burrata',
+        category: 'massas',
+        featured: true,
+        popular: true,
+        vegetarian: true,
+        glutenFree: false,
+        promo: false,
+        price: 49.50,
+        prepTime: '20–25 min',
+        serves: 'Serve 1 pessoa',
+        shortDesc: 'Massa fresca de fabricação própria, pesto de manjericão, tomatinhos confit e burrata.',
+        fullDesc: 'Fettuccine fresco preparado diariamente com sêmola italiana, envolvido em pesto clássico de manjericão fresco e castanha-do-pará, finalizado com meia burrata cremosa e tomates confitados.',
+        image: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=800&q=80',
+        requiredOption: {
+          title: 'Tipo de massa',
+          choices: ['Fettuccine tradicional', 'Penne integral']
+        },
+        addons: [
+          { id: 'a6', name: 'Parmesão ralado extra (40g)', price: 6.00 },
+          { id: 'a7', name: 'Tiras de frango grelhado', price: 12.00 },
+          { id: 'a8', name: 'Pão de fermentação natural (2 fatias)', price: 7.50 }
+        ]
+      },
+      {
+        id: 'p4',
+        name: 'Bowl Mediterrâneo de Salmão Grelhado',
+        category: 'bowls',
+        featured: false,
+        popular: true,
+        vegetarian: false,
+        glutenFree: true,
+        promo: false,
+        price: 54.00,
+        prepTime: '18–22 min',
+        serves: 'Serve 1 pessoa',
+        shortDesc: 'Salmão selado, quinoa tricolor, abacate, pepino, grão-de-bico e molho tahine.',
+        fullDesc: 'Bowl nutritivo e equilibrado com posta de salmão selada com crosta de gergelim, base de quinoa tricolor e folhas orgânicas, abacate fresco, grão-de-bico tostado e molho de tahine com limão.',
+        image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80',
+        requiredOption: {
+          title: 'Escolha o molho (enviado à parte)',
+          choices: ['Tahine com limão', 'Azeite e ervas finas', 'Mostarda e mel']
+        },
+        addons: [
+          { id: 'a9', name: 'Castanhas tostadas', price: 5.90 },
+          { id: 'a10', name: 'Queijo feta em cubos', price: 8.50 }
+        ]
+      },
+      {
+        id: 'p5',
+        name: 'Bowl Verde da Horta com Cogumelos',
+        category: 'bowls',
+        featured: false,
+        popular: false,
+        vegetarian: true,
+        glutenFree: true,
+        promo: true,
+        oldPrice: 41.00,
+        price: 35.90,
+        prepTime: '15–20 min',
+        serves: 'Serve 1 pessoa',
+        shortDesc: 'Mix de folhas, cogumelos salteados no shoyu, abóbora assada e homus.',
+        fullDesc: 'Opção 100% vegetariana com mix de folhas orgânicas, shimeji e shitake salteados, abóbora cabotiá assada com alecrim, homus cremoso de grão-de-bico e sementes de girassol.',
+        image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80',
+        requiredOption: {
+          title: 'Escolha a base',
+          choices: ['Mix de folhas e arroz negro', 'Apenas mix de folhas']
+        },
+        addons: [
+          { id: 'a11', name: 'Queijo coalho grelhado', price: 7.90 },
+          { id: 'a12', name: 'Abacate fatiado', price: 6.50 }
+        ]
+      },
+      {
+        id: 'p6',
+        name: 'Torta Basca de Cream Cheese com Calda',
+        category: 'sobremesas',
+        featured: false,
+        popular: true,
+        vegetarian: true,
+        glutenFree: false,
+        promo: false,
+        price: 22.90,
+        prepTime: '5–10 min',
+        serves: 'Fatia individual (150g)',
+        shortDesc: 'Torta cremosa de bordas caramelizadas com calda artesanal de frutas vermelhas.',
+        fullDesc: 'Clássica torta basca assada em alta temperatura para garantir exterior caramelizado e interior extremamente cremoso. Servida com calda fresca de morango, amora e framboesa.',
+        image: 'https://images.unsplash.com/photo-1533134242443-d4fd215305ad?auto=format&fit=crop&w=800&q=80',
+        requiredOption: {
+          title: 'Escolha a calda',
+          choices: ['Frutas vermelhas', 'Doce de leite artesanal', 'Sem calda']
+        },
+        addons: [
+          { id: 'a13', name: 'Calda extra (50ml)', price: 4.50 }
+        ]
+      },
+      {
+        id: 'p7',
+        name: 'Limonada Siciliana com Hortelã (400ml)',
+        category: 'bebidas',
+        featured: false,
+        popular: true,
+        vegetarian: true,
+        glutenFree: true,
+        promo: false,
+        price: 11.90,
+        prepTime: '5 min',
+        serves: 'Garrafa selada 400ml',
+        shortDesc: 'Preparada na hora com limão-siciliano fresco, folhas de hortelã e água filtrada.',
+        fullDesc: 'Refrescante e natural, preparada no momento do pedido e enviada em garrafa reciclável lacrada para manter o frescor até a sua casa.',
+        image: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=800&q=80',
+        requiredOption: {
+          title: 'Adoçar',
+          choices: ['Pouco açúcar', 'Sem açúcar', 'Adoçante stevia']
+        },
+        addons: [
+          { id: 'a14', name: 'Copo com gelo à parte', price: 0.00 }
+        ]
+      },
+      {
+        id: 'p8',
+        name: 'Chá Gelado de Pêssego e Hibisco (400ml)',
+        category: 'bebidas',
+        featured: false,
+        popular: false,
+        vegetarian: true,
+        glutenFree: true,
+        promo: false,
+        price: 10.90,
+        prepTime: '5 min',
+        serves: 'Garrafa selada 400ml',
+        shortDesc: 'Infusão artesanal de hibisco com polpa natural de pêssego e toque cítrico.',
+        fullDesc: 'Chá gelado produzido na casa sem conservantes, levemente adocicado com polpa natural de pêssego.',
+        image: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?auto=format&fit=crop&w=800&q=80',
+        requiredOption: {
+          title: 'Temperatura',
+          choices: ['Bem gelado', 'Natural']
+        },
+        addons: []
+      }
+    ];
+
+    // =========================================================
+    // ESTADO GLOBAL DO APLICATIVO
+    // =========================================================
+    const state = {
+      screen: 'menu', // 'menu' | 'product' | 'cart' | 'address' | 'checkout' | 'tracking'
+      viewport: 'mobile',
+      highContrast: false,
+      loading: false,
+
+      // Filtros do cardápio
+      searchQuery: '',
+      activeCategory: 'destaques',
+      activeFilter: 'todos', // 'todos' | 'popular' | 'vegetarian' | 'glutenFree' | 'promo'
+      favorites: ['p1'],
+
+      // Tela de Produto (criação ou edição)
+      selectedProductId: null,
+      editingCartItemId: null,
+      productDraft: {
+        requiredChoice: '',
+        addonIds: [],
+        notes: '',
+        quantity: 1,
+        validationError: ''
+      },
+
+      // Carrinho (inicia com 1 item realista para facilitar testes, mas pode ser esvaziado)
+      cart: [
+        {
+          cartId: 'c-init-1',
+          productId: 'p1',
+          requiredChoice: 'Ao ponto',
+          addonIds: ['a2'],
+          notes: 'Molho à parte, por favor.',
+          quantity: 1
+        }
+      ],
+      lastRemovedItem: null,
+
+      // Endereços
+      addresses: [
+        {
+          id: 'addr-1',
+          label: 'Casa',
+          cep: '14160-000',
+          street: 'Rua Barão do Rio Branco',
+          number: '1240',
+          complement: 'Apto 42 - Bloco B',
+          neighborhood: 'Centro',
+          reference: 'Em frente à farmácia',
+          instructions: 'Interfone 42, pode deixar na portaria',
+          fee: 7.90,
+          eta: '30–40 min'
+        },
+        {
+          id: 'addr-2',
+          label: 'Trabalho',
+          cep: '14160-450',
+          street: 'Av. Hércules Bighetti',
+          number: '380',
+          complement: 'Sala 05',
+          neighborhood: 'Jardim Alvorada',
+          reference: 'Prédio comercial azul',
+          instructions: 'Avisar na recepção',
+          fee: 9.90,
+          eta: '35–45 min'
+        }
+      ],
+      selectedAddressId: 'addr-1',
+      showAddressForm: false,
+      editingAddressId: null,
+      addressFormErrors: {},
+
+      // Usuário (Acesso opcional sem burocracia)
+      user: {
+        loggedIn: false,
+        name: '',
+        phone: ''
+      },
+
+      // Pagamento e revisão
+      paymentMethod: 'pix', // 'pix' | 'card' | 'delivery'
+      deliveryPayType: 'maquininha', // 'maquininha' | 'dinheiro'
+      changeFor: '',
+      couponCode: '',
+      appliedCoupon: null, // { code, type: 'percent'|'free_shipping', value, label }
+      couponError: '',
+      checkoutErrors: {},
+
+      // Pedido ativo / Acompanhamento
+      activeOrder: null,
+      rating: 0,
+      ratingSubmitted: false
+    };
+
+    // =========================================================
+    // UTILITÁRIOS FINANCEIROS E DE CÁLCULO
+    // =========================================================
+    const formatBRL = (val) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+    function getProduct(id) {
+      return PRODUCTS.find(p => p.id === id);
+    }
+
+    function getSelectedAddress() {
+      return state.addresses.find(a => a.id === state.selectedAddressId) || state.addresses[0];
+    }
+
+    function getCartItemUnitPrice(item) {
+      const prod = getProduct(item.productId);
+      if (!prod) return 0;
+      const addonsTotal = item.addonIds.reduce((sum, aid) => {
+        const addon = prod.addons.find(a => a.id === aid);
+        return sum + (addon ? addon.price : 0);
+      }, 0);
+      return prod.price + addonsTotal;
+    }
+
+    function getCartSummary() {
+      const subtotal = state.cart.reduce((sum, item) => sum + getCartItemUnitPrice(item) * item.quantity, 0);
+      const itemCount = state.cart.reduce((sum, item) => sum + item.quantity, 0);
+      const addr = getSelectedAddress();
+      let deliveryFee = subtotal === 0 ? 0 : (subtotal >= 100 ? 0 : (addr ? addr.fee : 7.90));
+      let discount = 0;
+
+      if (state.appliedCoupon && subtotal > 0) {
+        if (state.appliedCoupon.type === 'percent') {
+          discount = subtotal * (state.appliedCoupon.value / 100);
+        } else if (state.appliedCoupon.type === 'free_shipping') {
+          deliveryFee = 0;
+        }
+      }
+
+      const total = Math.max(0, subtotal - discount + deliveryFee);
+      return { subtotal, itemCount, deliveryFee, discount, total, freeShippingRemaining: Math.max(0, 100 - subtotal) };
+    }
+
+    // =========================================================
+    // TOASTS E MODAIS (FEEDBACK DO SISTEMA)
+    // =========================================================
+    let toastTimer = null;
+    function showToast(message, options = {}) {
+      const container = document.getElementById('toast-container');
+      const { type = 'info', actionLabel = null, onAction = null } = options;
+      const bg = type === 'error' ? 'bg-red-700' : type === 'success' ? 'bg-leaf-600' : 'bg-stone-900';
+      const id = 'toast-' + Date.now();
+
+      container.innerHTML = `
+        <div id="${id}" class="pointer-events-auto ${bg} text-white px-4 py-3 rounded-xl shadow-lg flex items-center justify-between gap-3 w-full max-w-sm text-sm animate-view">
+          <span class="font-medium">${message}</span>
+          ${actionLabel ? `<button id="${id}-btn" class="text-amber-300 font-bold underline underline-offset-2 shrink-0 px-1 py-0.5">${actionLabel}</button>` : ''}
+        </div>
+      `;
+
+      if (actionLabel && onAction) {
+        document.getElementById(`${id}-btn`).onclick = () => {
+          onAction();
+          container.innerHTML = '';
+        };
+      }
+
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        container.innerHTML = '';
+      }, 4000);
+    }
+
+    function openModal(html) {
+      const modal = document.getElementById('modal-root');
+      modal.innerHTML = html;
+      modal.classList.remove('hidden');
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('modal-root');
+      modal.classList.add('hidden');
+      modal.innerHTML = '';
+    }
+
+    function openQuickAuthModal() {
+      openModal(`
+        <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl animate-view" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+          <div class="flex items-center justify-between mb-4">
+            <h2 id="auth-title" class="font-display font-bold text-lg text-stone-900">${state.user.loggedIn ? 'Seus dados' : 'Acesso rápido'}</h2>
+            <button onclick="closeModal()" class="w-10 h-10 rounded-full hover:bg-stone-100 flex items-center justify-center text-stone-500" aria-label="Fechar">✕</button>
+          </div>
+          <p class="text-sm text-stone-600 mb-4">Não exigimos senha complexa. Informe apenas seu nome e WhatsApp para agilizar seus pedidos e receber atualizações.</p>
+          <form onsubmit="saveQuickAuth(event)" class="space-y-3">
+            <div>
+              <label for="auth-name" class="block text-xs font-semibold text-stone-700 mb-1">Nome completo *</label>
+              <input id="auth-name" type="text" required value="${state.user.name || ''}" placeholder="Ex: Marina Oliveira" class="w-full px-3.5 py-3 rounded-xl border border-stone-300 text-sm focus:border-brand-600 focus:outline-none" />
+            </div>
+            <div>
+              <label for="auth-phone" class="block text-xs font-semibold text-stone-700 mb-1">WhatsApp / Celular *</label>
+              <input id="auth-phone" type="tel" required value="${state.user.phone || ''}" placeholder="(16) 99123-4567" class="w-full px-3.5 py-3 rounded-xl border border-stone-300 text-sm focus:border-brand-600 focus:outline-none" />
+            </div>
+            <div class="pt-2 flex gap-2">
+              <button type="button" onclick="closeModal()" class="flex-1 py-3 rounded-xl border border-stone-300 text-stone-700 font-semibold text-sm hover:bg-stone-50">Continuar visitante</button>
+              <button type="submit" class="flex-1 py-3 rounded-xl bg-brand-600 text-white font-semibold text-sm hover:bg-brand-700">Salvar acesso</button>
+            </div>
+          </form>
+        </div>
+      `);
+    }
+
+    function saveQuickAuth(e) {
+      e.preventDefault();
+      const name = document.getElementById('auth-name').value.trim();
+      const phone = document.getElementById('auth-phone').value.trim();
+      if (!name || !phone) return;
+      state.user = { loggedIn: true, name, phone };
+      closeModal();
+      showToast(`Olá, ${name.split(' ')[0]}! Acesso salvo.`, { type: 'success' });
+      render();
+    }
+
+    function openSupportModal() {
+      openModal(`
+        <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl animate-view" role="dialog" aria-modal="true" aria-labelledby="support-title">
+          <div class="flex items-center justify-between mb-3">
+            <h2 id="support-title" class="font-display font-bold text-lg text-stone-900">Ajuda com o pedido</h2>
+            <button onclick="closeModal()" class="w-10 h-10 rounded-full hover:bg-stone-100 flex items-center justify-center text-stone-500" aria-label="Fechar">✕</button>
+          </div>
+          <p class="text-sm text-stone-600 mb-4">Fale diretamente com a equipe do <strong>Brasa &amp; Folha</strong> sobre o pedido <strong>${state.activeOrder ? state.activeOrder.code : '#BF-4829'}</strong>:</p>
+          <div class="space-y-2.5 mb-4">
+            <button onclick="sendSupportQuickMsg('Quero atualizar uma observação do prato')" class="w-full text-left px-4 py-3 rounded-xl border border-stone-200 hover:border-brand-600 hover:bg-brand-50 text-sm font-medium text-stone-800 transition">
+              Quero atualizar uma observação do prato
+            </button>
+            <button onclick="sendSupportQuickMsg('Preciso corrigir o endereço ou referência')" class="w-full text-left px-4 py-3 rounded-xl border border-stone-200 hover:border-brand-600 hover:bg-brand-50 text-sm font-medium text-stone-800 transition">
+              Preciso corrigir o endereço ou referência
+            </button>
+            <button onclick="sendSupportQuickMsg('Meu pedido está atrasado')" class="w-full text-left px-4 py-3 rounded-xl border border-stone-200 hover:border-brand-600 hover:bg-brand-50 text-sm font-medium text-stone-800 transition">
+              Meu pedido está atrasado
+            </button>
+          </div>
+          <div class="bg-stone-50 p-3 rounded-xl text-xs text-stone-600 flex items-center justify-between">
+            <span>Telefone do restaurante: <strong>(16) 3942-8810</strong></span>
+            <span class="text-leaf-600 font-semibold">Online</span>
+          </div>
+        </div>
+      `);
+    }
+
+    function sendSupportQuickMsg(msg) {
+      closeModal();
+      showToast('Mensagem enviada! Atendente responderá em até 2 min.', { type: 'success' });
+    }
+
+    function simulateNetworkError() {
+      openModal(`
+        <div class="bg-white w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl p-6 text-center shadow-2xl animate-view" role="alertdialog" aria-modal="true">
+          <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-red-50 text-red-700 flex items-center justify-center">
+            ${ICONS.wifiOff}
+          </div>
+          <h2 class="font-display font-bold text-lg text-stone-900 mb-1">Conexão instável detectada</h2>
+          <p class="text-sm text-stone-600 mb-5">Não foi possível sincronizar os dados agora. Seu carrinho e suas escolhas foram mantidos em segurança.</p>
+          <div class="flex gap-2">
+            <button onclick="closeModal()" class="flex-1 py-3 rounded-xl border border-stone-300 text-stone-700 font-semibold text-sm">Fechar</button>
+            <button onclick="retryConnection()" class="flex-1 py-3 rounded-xl bg-brand-600 text-white font-semibold text-sm hover:bg-brand-700">Tentar novamente</button>
+          </div>
+        </div>
+      `);
+    }
+
+    function retryConnection() {
+      closeModal();
+      showToast('Conexão restabelecida com sucesso!', { type: 'success' });
+    }
+
+    // =========================================================
+    // NAVEGAÇÃO E CONTROLES DA BARRA IHC
+    // =========================================================
+    function navigate(screen) {
+      state.screen = screen;
+      render();
+      const scrollEl = document.getElementById('screen-scroll');
+      if (scrollEl) scrollEl.scrollTop = 0;
+    }
+
+    function openProduct(productId, editCartItemId = null) {
+      const prod = getProduct(productId);
+      if (!prod) return;
+      state.selectedProductId = productId;
+      state.editingCartItemId = editCartItemId;
+
+      if (editCartItemId) {
+        const existing = state.cart.find(c => c.cartId === editCartItemId);
+        if (existing) {
+          state.productDraft = {
+            requiredChoice: existing.requiredChoice,
+            addonIds: [...existing.addonIds],
+            notes: existing.notes,
+            quantity: existing.quantity,
+            validationError: ''
+          };
+        }
+      } else {
+        state.productDraft = {
+          requiredChoice: '',
+          addonIds: [],
+          notes: '',
+          quantity: 1,
+          validationError: ''
+        };
+      }
+      navigate('product');
+    }
+
+    function openProductDemo() {
+      openProduct(state.selectedProductId || 'p1');
+    }
+
+    function openTrackingDemo() {
+      if (!state.activeOrder) {
+        const summary = getCartSummary();
+        state.activeOrder = {
+          code: '#BF-4829',
+          createdAt: 'Hoje, 19:42',
+          eta: '30–40 min',
+          step: 2, // 1: Recebido, 2: Em preparo, 3: Saiu para entrega, 4: Entregue
+          address: getSelectedAddress(),
+          paymentLabel: 'Pix (Aprovado)',
+          items: state.cart.length ? JSON.parse(JSON.stringify(state.cart)) : [{
+            cartId: 'demo-1', productId: 'p1', requiredChoice: 'Ao ponto', addonIds: ['a2'], notes: 'Molho à parte', quantity: 1
+          }],
+          totals: summary.itemCount ? summary : { subtotal: 63.80, deliveryFee: 7.90, discount: 0, total: 71.70 },
+          courier: { name: 'Lucas Mendes', vehicle: 'Moto Honda CG • Placa FGH-4J21', code: '4567' }
+        };
+      }
+      navigate('tracking');
+    }
+
+    function setViewport(vp) {
+      state.viewport = vp;
+      const shell = document.getElementById('app-shell');
+      shell.classList.remove('viewport-mobile', 'viewport-tablet', 'viewport-desktop');
+      shell.classList.add('viewport-' + vp);
+
+      ['mobile', 'tablet', 'desktop'].forEach(v => {
+        const btn = document.getElementById('vp-' + v);
+        if (v === vp) {
+          btn.classList.add('bg-stone-700', 'text-white', 'font-medium');
+          btn.classList.remove('text-stone-300');
+        } else {
+          btn.classList.remove('bg-stone-700', 'text-white', 'font-medium');
+          btn.classList.add('text-stone-300');
+        }
+      });
+      render();
+    }
+
+    function toggleAccessibility() {
+      state.highContrast = !state.highContrast;
+      document.documentElement.classList.toggle('high-contrast', state.highContrast);
+      document.documentElement.style.setProperty('--font-scale', state.highContrast ? '1.08' : '1');
+      const btn = document.getElementById('btn-a11y');
+      btn.classList.toggle('bg-amber-400', state.highContrast);
+      btn.classList.toggle('text-stone-900', state.highContrast);
+      btn.classList.toggle('font-bold', state.highContrast);
+      showToast(state.highContrast ? 'Alto contraste e fonte ampliada ativados' : 'Modo visual padrão restaurado');
+    }
+
+    function toggleToolbar() {
+      const tb = document.getElementById('ihc-toolbar');
+      const btn = document.getElementById('show-toolbar-btn');
+      const isHidden = tb.classList.toggle('hidden');
+      btn.classList.toggle('hidden', !isHidden);
+    }
+
+    // =========================================================
+    // RENDERIZAÇÃO: TELA 1 — CARDÁPIO / INICIAL
+    // =========================================================
+    function renderMenuScreen() {
+      const addr = getSelectedAddress();
+      const summary = getCartSummary();
+      const isWide = state.viewport !== 'mobile';
+
+      const filtered = PRODUCTS.filter(p => {
+        const q = state.searchQuery.trim().toLowerCase();
+        const matchesSearch = !q || p.name.toLowerCase().includes(q) || p.shortDesc.toLowerCase().includes(q);
+        const matchesCat = state.activeCategory === 'destaques' ? true : p.category === state.activeCategory;
+        const matchesFilter =
+          state.activeFilter === 'todos' ? true :
+          state.activeFilter === 'popular' ? p.popular :
+          state.activeFilter === 'vegetarian' ? p.vegetarian :
+          state.activeFilter === 'glutenFree' ? p.glutenFree :
+          state.activeFilter === 'promo' ? p.promo : true;
+        return matchesSearch && matchesCat && matchesFilter;
+      });
+
+      const featuredList = PRODUCTS.filter(p => p.featured);
+
+      return `
+        <!-- Header Fixo -->
+        <header class="bg-white border-b border-stone-200 px-4 pt-3 pb-3 shrink-0 z-20">
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <button onclick="navigate('address')" class="flex items-center gap-2 text-left min-h-[44px] pr-2 rounded-xl hover:bg-stone-50 transition" aria-label="Alterar endereço de entrega">
+              <span class="w-9 h-9 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center shrink-0">${ICONS.mapPin}</span>
+              <div class="min-w-0">
+                <p class="text-[11px] font-semibold text-stone-500 uppercase tracking-wide leading-tight">Entregar em</p>
+                <p class="text-sm font-bold text-stone-900 truncate flex items-center gap-1">
+                  ${addr ? `${addr.street}, ${addr.number}` : 'Definir endereço'}
+                  <span class="text-brand-600">${ICONS.chevronDown}</span>
+                </p>
+              </div>
+            </button>
+            <button onclick="openQuickAuthModal()" class="min-w-[44px] min-h-[44px] px-3 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-800 flex items-center gap-1.5 text-xs font-semibold transition" aria-label="Acesso do cliente">
+              ${ICONS.user}
+              <span class="hidden sm:inline">${state.user.loggedIn ? state.user.name.split(' ')[0] : 'Entrar'}</span>
+            </button>
+          </div>
+
+          <!-- Busca -->
+          <div class="relative">
+            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none">${ICONS.search}</span>
+            <input
+              type="search"
+              value="${state.searchQuery}"
+              oninput="updateSearch(this.value)"
+              placeholder="Buscar pratos, massas, bebidas..."
+              aria-label="Buscar no cardápio"
+              class="w-full pl-11 pr-10 py-3 rounded-xl bg-stone-100 border border-transparent focus:bg-white focus:border-brand-600 text-sm text-stone-900 placeholder:text-stone-500 transition"
+            />
+            ${state.searchQuery ? `
+              <button onclick="updateSearch('')" class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full text-stone-500 hover:bg-stone-200 flex items-center justify-center text-xs" aria-label="Limpar busca">✕</button>
+            ` : ''}
+          </div>
+        </header>
+
+        <!-- Área Rolável -->
+        <div id="screen-scroll" class="flex-1 overflow-y-auto pb-32 animate-view">
+          <!-- Banner do Restaurante -->
+          <section class="px-4 pt-4">
+            <div class="bg-gradient-to-br from-brand-700 via-brand-600 to-brand-500 rounded-2xl p-4 text-white shadow-sm relative overflow-hidden">
+              <div class="relative z-10 flex items-start justify-between gap-3">
+                <div>
+                  <div class="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-sm px-2.5 py-0.5 rounded-full text-[11px] font-semibold mb-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-300 pulse-dot"></span>
+                    Aberto agora • Entrega própria
+                  </div>
+                  <h1 class="font-display font-extrabold text-xl tracking-tight">Brasa &amp; Folha</h1>
+                  <p class="text-xs text-brand-50 mt-0.5">Cozinha Contemporânea • Grelhados, Massas &amp; Bowls</p>
+                </div>
+                <div class="bg-white text-stone-900 px-2.5 py-1.5 rounded-xl text-center shrink-0 shadow-sm">
+                  <div class="flex items-center justify-center gap-1 font-bold text-sm">
+                    ${ICONS.star} <span>4,9</span>
+                  </div>
+                  <span class="text-[10px] text-stone-500 block">420+ aval.</span>
+                </div>
+              </div>
+              <div class="relative z-10 mt-3 pt-3 border-t border-white/20 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-brand-50">
+                <span class="inline-flex items-center gap-1">${ICONS.clock} ${addr ? addr.eta : '30–40 min'}</span>
+                <span class="inline-flex items-center gap-1">${ICONS.bike} Taxa ${addr ? formatBRL(addr.fee) : 'R$ 7,90'}</span>
+                <span class="inline-flex items-center gap-1 font-semibold text-amber-200">${ICONS.tag} Frete grátis acima de R$ 100</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- Filtros Rápidos -->
+          <section class="px-4 pt-3">
+            <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1" role="group" aria-label="Filtros do cardápio">
+              ${[
+                { id: 'todos', label: 'Todos' },
+                { id: 'popular', label: 'Mais pedidos' },
+                { id: 'promo', label: 'Ofertas' },
+                { id: 'vegetarian', label: 'Vegetariano' },
+                { id: 'glutenFree', label: 'Sem glúten' }
+              ].map(f => `
+                <button
+                  onclick="setFilter('${f.id}')"
+                  class="min-h-[38px] px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap border transition ${state.activeFilter === f.id ? 'bg-leaf-600 text-white border-leaf-600' : 'bg-white text-stone-700 border-stone-200 hover:border-stone-400'}"
+                >${f.label}</button>
+              `).join('')}
+            </div>
+          </section>
+
+          <!-- Destaques da Casa (apenas quando sem busca ativa) -->
+          ${!state.searchQuery && state.activeFilter === 'todos' && state.activeCategory === 'destaques' ? `
+            <section class="pt-4">
+              <div class="px-4 flex items-center justify-between mb-2.5">
+                <h2 class="font-display font-bold text-base text-stone-900">Destaques do Chef</h2>
+                <span class="text-xs text-stone-500">Toque para personalizar</span>
+              </div>
+              <div class="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-2">
+                ${featuredList.map(p => `
+                  <article onclick="openProduct('${p.id}')" tabindex="0" role="button" class="w-60 shrink-0 bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-sm hover:shadow-md transition cursor-pointer flex flex-col">
+                    <div class="relative h-32 bg-stone-100">
+                      <img src="${p.image}" alt="${p.name}" onerror="this.src='${fallbackImg(p.name)}'" class="w-full h-full object-cover" />
+                      ${p.promo ? `<span class="absolute top-2 left-2 bg-leaf-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">OFERTA</span>` : ''}
+                    </div>
+                    <div class="p-3 flex-1 flex flex-col justify-between">
+                      <div>
+                        <h3 class="font-display font-bold text-sm text-stone-900 line-clamp-1">${p.name}</h3>
+                        <p class="text-xs text-stone-600 mt-1 line-clamp-2">${p.shortDesc}</p>
+                      </div>
+                      <div class="mt-2.5 flex items-center justify-between">
+                        <div>
+                          ${p.oldPrice ? `<span class="text-[11px] text-stone-400 line-through mr-1">${formatBRL(p.oldPrice)}</span>` : ''}
+                          <span class="font-bold text-sm text-brand-600">${formatBRL(p.price)}</span>
+                        </div>
+                        <span class="text-[11px] text-stone-500">${p.prepTime}</span>
+                      </div>
+                    </div>
+                  </article>
+                `).join('')}
+              </div>
+            </section>
+          ` : ''}
+
+          <!-- Abas de Categorias -->
+          <section class="sticky top-0 bg-cream/95 backdrop-blur-sm z-10 px-4 pt-3 pb-2 border-b border-stone-200/70">
+            <div class="flex gap-2 overflow-x-auto no-scrollbar" role="tablist" aria-label="Categorias de pratos">
+              ${CATEGORIES.map(c => `
+                <button
+                  role="tab"
+                  aria-selected="${state.activeCategory === c.id}"
+                  onclick="setCategory('${c.id}')"
+                  class="min-h-[40px] px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition ${state.activeCategory === c.id ? 'bg-brand-600 text-white shadow-sm' : 'bg-white text-stone-700 border border-stone-200 hover:bg-stone-50'}"
+                >${c.label}</button>
+              `).join('')}
+            </div>
+          </section>
+
+          <!-- Lista de Pratos -->
+          <section class="px-4 pt-4">
+            <div class="flex items-center justify-between mb-3">
+              <h2 class="font-display font-bold text-base text-stone-900">
+                ${CATEGORIES.find(c => c.id === state.activeCategory)?.label || 'Cardápio'}
+                <span class="text-xs font-normal text-stone-500 ml-1">(${filtered.length} ${filtered.length === 1 ? 'item' : 'itens'})</span>
+              </h2>
+            </div>
+
+            ${filtered.length === 0 ? `
+              <!-- Estado Vazio de Busca -->
+              <div class="bg-white rounded-2xl border border-stone-200 p-8 text-center">
+                <div class="w-14 h-14 mx-auto mb-3 rounded-full bg-stone-100 text-stone-500 flex items-center justify-center">${ICONS.search}</div>
+                <h3 class="font-display font-bold text-base text-stone-900">Nenhum prato encontrado</h3>
+                <p class="text-sm text-stone-600 mt-1 mb-4">Não encontramos itens para os filtros atuais. Tente outro termo ou limpe os filtros.</p>
+                <button onclick="resetMenuFilters()" class="px-5 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700">Limpar busca e filtros</button>
+              </div>
+            ` : `
+              <div class="grid ${isWide ? 'grid-cols-2' : 'grid-cols-1'} gap-3">
+                ${filtered.map(p => `
+                  <article onclick="openProduct('${p.id}')" tabindex="0" role="button" class="bg-white rounded-2xl border border-stone-200 p-3 flex gap-3 hover:border-brand-300 hover:shadow-sm transition cursor-pointer">
+                    <div class="flex-1 min-w-0 flex flex-col justify-between">
+                      <div>
+                        <div class="flex flex-wrap items-center gap-1.5 mb-1">
+                          ${p.promo ? `<span class="text-[10px] font-bold bg-leaf-100 text-leaf-700 px-2 py-0.5 rounded-full">Oferta</span>` : ''}
+                          ${p.vegetarian ? `<span class="text-[10px] font-semibold bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded-full inline-flex items-center gap-0.5">${ICONS.leaf} Veg</span>` : ''}
+                          ${p.glutenFree ? `<span class="text-[10px] font-semibold bg-amber-50 text-amber-800 px-2 py-0.5 rounded-full">Sem glúten</span>` : ''}
+                        </div>
+                        <h3 class="font-display font-bold text-sm text-stone-900 leading-snug">${p.name}</h3>
+                        <p class="text-xs text-stone-600 mt-1 line-clamp-2">${p.shortDesc}</p>
+                      </div>
+                      <div class="mt-2.5 flex items-center justify-between">
+                        <div>
+                          ${p.oldPrice ? `<span class="text-xs text-stone-400 line-through mr-1">${formatBRL(p.oldPrice)}</span>` : ''}
+                          <span class="font-bold text-sm text-brand-600">${formatBRL(p.price)}</span>
+                        </div>
+                        <span class="text-[11px] text-stone-500 inline-flex items-center gap-1">${ICONS.clock} ${p.prepTime}</span>
+                      </div>
+                    </div>
+                    <div class="w-24 h-24 rounded-xl overflow-hidden bg-stone-100 shrink-0 relative self-center">
+                      <img src="${p.image}" alt="${p.name}" onerror="this.src='${fallbackImg(p.name)}'" class="w-full h-full object-cover" />
+                      <span class="absolute bottom-1.5 right-1.5 w-7 h-7 rounded-full bg-white/95 text-brand-600 shadow flex items-center justify-center" aria-hidden="true">${ICONS.plus}</span>
+                    </div>
+                  </article>
+                `).join('')}
+              </div>
+            `}
+          </section>
+        </div>
+
+        <!-- Barra Flutuante do Carrinho (quando há itens) -->
+        ${summary.itemCount > 0 ? `
+          <div class="absolute bottom-[68px] left-4 right-4 z-20">
+            <button onclick="navigate('cart')" class="w-full bg-brand-600 hover:bg-brand-700 text-white px-4 py-3.5 rounded-2xl shadow-lg flex items-center justify-between transition" aria-label="Ver carrinho com ${summary.itemCount} itens">
+              <div class="flex items-center gap-2.5">
+                <span class="w-7 h-7 rounded-lg bg-white/20 font-bold text-xs flex items-center justify-center">${summary.itemCount}</span>
+                <span class="font-semibold text-sm">Ver carrinho</span>
+              </div>
+              <span class="font-display font-bold text-sm">${formatBRL(summary.subtotal)}</span>
+            </button>
+          </div>
+        ` : ''}
+
+        ${renderBottomNav('menu')}
+      `;
+    }
+
+    function updateSearch(val) {
+      state.searchQuery = val;
+      render();
+      const input = document.querySelector('input[type="search"]');
+      if (input) { input.focus(); input.setSelectionRange(val.length, val.length); }
+    }
+    function setCategory(cat) { state.activeCategory = cat; render(); }
+    function setFilter(f) { state.activeFilter = f; render(); }
+    function resetMenuFilters() { state.searchQuery = ''; state.activeCategory = 'destaques'; state.activeFilter = 'todos'; render(); }
+
+    // =========================================================
+    // RENDERIZAÇÃO: TELA 2 — DETALHES DO PRODUTO
+    // =========================================================
+    function renderProductScreen() {
+      const prod = getProduct(state.selectedProductId);
+      if (!prod) return renderMenuScreen();
+      const draft = state.productDraft;
+      const isFav = state.favorites.includes(prod.id);
+
+      const addonsSum = draft.addonIds.reduce((s, aid) => {
+        const a = prod.addons.find(x => x.id === aid);
+        return s + (a ? a.price : 0);
+      }, 0);
+      const totalItemPrice = (prod.price + addonsSum) * draft.quantity;
+
+      return `
+        <div id="screen-scroll" class="flex-1 overflow-y-auto pb-28 bg-cream animate-view">
+          <!-- Imagem Hero + Ações -->
+          <div class="relative h-60 sm:h-72 bg-stone-200">
+            <img src="${prod.image}" alt="${prod.name}" onerror="this.src='${fallbackImg(prod.name)}'" class="w-full h-full object-cover" />
+            <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/30"></div>
+            <div class="absolute top-3 left-3 right-3 flex items-center justify-between">
+              <button onclick="navigate('${state.editingCartItemId ? 'cart' : 'menu'}')" class="w-11 h-11 rounded-full bg-white/95 text-stone-900 shadow flex items-center justify-center hover:bg-white" aria-label="Voltar">
+                ${ICONS.arrowLeft}
+              </button>
+              <button onclick="toggleFavorite('${prod.id}')" class="w-11 h-11 rounded-full bg-white/95 text-stone-900 shadow flex items-center justify-center hover:bg-white" aria-label="${isFav ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}">
+                ${isFav ? ICONS.heartFill : ICONS.heart}
+              </button>
+            </div>
+            <div class="absolute bottom-3 left-4 flex flex-wrap gap-1.5">
+              <span class="bg-black/70 text-white text-xs font-medium px-2.5 py-1 rounded-full inline-flex items-center gap-1">${ICONS.clock} ${prod.prepTime}</span>
+              <span class="bg-black/70 text-white text-xs font-medium px-2.5 py-1 rounded-full">${prod.serves}</span>
+            </div>
+          </div>
+
+          <!-- Informações Principais -->
+          <div class="bg-white px-4 py-4 border-b border-stone-200">
+            <div class="flex flex-wrap gap-1.5 mb-2">
+              ${prod.vegetarian ? `<span class="text-xs font-semibold bg-emerald-50 text-emerald-800 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">${ICONS.leaf} Vegetariano</span>` : ''}
+              ${prod.glutenFree ? `<span class="text-xs font-semibold bg-amber-50 text-amber-800 px-2.5 py-0.5 rounded-full">Sem glúten</span>` : ''}
+            </div>
+            <h1 class="font-display font-extrabold text-xl text-stone-900">${prod.name}</h1>
+            <p class="text-sm text-stone-600 mt-1.5 leading-relaxed">${prod.fullDesc}</p>
+            <div class="mt-3 flex items-baseline gap-2">
+              <span class="font-display font-bold text-lg text-brand-600">${formatBRL(prod.price)}</span>
+              ${prod.oldPrice ? `<span class="text-sm text-stone-400 line-through">${formatBRL(prod.oldPrice)}</span>` : ''}
+            </div>
+          </div>
+
+          <!-- Opção Obrigatória -->
+          <section id="required-section" class="bg-white mt-3 px-4 py-4 border-y border-stone-200">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h2 class="font-display font-bold text-sm text-stone-900">${prod.requiredOption.title}</h2>
+                <p class="text-xs text-stone-500">Escolha 1 opção</p>
+              </div>
+              <span class="text-[11px] font-bold px-2.5 py-1 rounded-full ${draft.requiredChoice ? 'bg-leaf-100 text-leaf-700' : 'bg-amber-100 text-amber-800'}">
+                ${draft.requiredChoice ? '✓ Concluído' : 'Obrigatório'}
+              </span>
+            </div>
+
+            ${draft.validationError ? `
+              <div role="alert" class="mb-3 p-3 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs font-medium flex items-center gap-2">
+                <span class="shrink-0 text-red-700">${ICONS.alert}</span>
+                <span>${draft.validationError}</span>
+              </div>
+            ` : ''}
+
+            <div class="space-y-2" role="radiogroup" aria-label="${prod.requiredOption.title}">
+              ${prod.requiredOption.choices.map(choice => {
+                const selected = draft.requiredChoice === choice;
+                return `
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked="${selected}"
+                    onclick="selectRequiredChoice('${choice}')"
+                    class="w-full min-h-[48px] px-3.5 py-3 rounded-xl border text-left flex items-center justify-between transition ${selected ? 'border-brand-600 bg-brand-50/70' : 'border-stone-200 hover:bg-stone-50'}"
+                  >
+                    <span class="text-sm font-medium ${selected ? 'text-brand-800 font-semibold' : 'text-stone-800'}">${choice}</span>
+                    <span class="w-5 h-5 rounded-full border-2 flex items-center justify-center ${selected ? 'border-brand-600 bg-brand-600 text-white' : 'border-stone-300'}">
+                      ${selected ? '<span class="w-2 h-2 rounded-full bg-white"></span>' : ''}
+                    </span>
+                  </button>
+                `;
+              }).join('')}
+            </div>
+          </section>
+
+          <!-- Adicionais Opcionais -->
+          ${prod.addons.length > 0 ? `
+            <section class="bg-white mt-3 px-4 py-4 border-y border-stone-200">
+              <div class="flex items-center justify-between mb-3">
+                <div>
+                  <h2 class="font-display font-bold text-sm text-stone-900">Turbinar seu prato</h2>
+                  <p class="text-xs text-stone-500">Opcional • Escolha quantos quiser</p>
+                </div>
+                <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-stone-100 text-stone-600">Opcional</span>
+              </div>
+              <div class="space-y-2">
+                ${prod.addons.map(addon => {
+                  const checked = draft.addonIds.includes(addon.id);
+                  return `
+                    <button
+                      type="button"
+                      role="checkbox"
+                      aria-checked="${checked}"
+                      onclick="toggleAddon('${addon.id}')"
+                      class="w-full min-h-[48px] px-3.5 py-3 rounded-xl border text-left flex items-center justify-between transition ${checked ? 'border-brand-600 bg-brand-50/60' : 'border-stone-200 hover:bg-stone-50'}"
+                    >
+                      <div>
+                        <span class="text-sm font-medium text-stone-900 block">${addon.name}</span>
+                        <span class="text-xs font-semibold text-leaf-600">${addon.price > 0 ? '+ ' + formatBRL(addon.price) : 'Grátis'}</span>
+                      </div>
+                      <span class="w-5 h-5 rounded-md border-2 flex items-center justify-center ${checked ? 'border-brand-600 bg-brand-600 text-white' : 'border-stone-300'}">
+                        ${checked ? ICONS.check : ''}
+                      </span>
+                    </button>
+                  `;
+                }).join('')}
+              </div>
+            </section>
+          ` : ''}
+
+          <!-- Observações -->
+          <section class="bg-white mt-3 px-4 py-4 border-y border-stone-200">
+            <div class="flex items-center justify-between mb-2">
+              <label for="prod-notes" class="font-display font-bold text-sm text-stone-900">Alguma observação?</label>
+              <span class="text-xs text-stone-500">${draft.notes.length}/140</span>
+            </div>
+            <textarea
+              id="prod-notes"
+              maxlength="140"
+              rows="2"
+              oninput="updateProductNotes(this.value)"
+              placeholder="Ex: Sem cebola, molho à parte, enviar talheres descartáveis..."
+              class="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-sm focus:border-brand-600 focus:outline-none resize-none"
+            >${draft.notes}</textarea>
+          </section>
+        </div>
+
+        <!-- Rodapé Fixo de Ação -->
+        <footer class="bg-white border-t border-stone-200 p-4 flex items-center gap-3 shrink-0 z-20 shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
+          <div class="flex items-center border border-stone-300 rounded-xl overflow-hidden bg-stone-50">
+            <button onclick="changeDraftQty(-1)" class="w-11 h-12 flex items-center justify-center text-stone-700 hover:bg-stone-200 disabled:opacity-40" ${draft.quantity <= 1 ? 'disabled' : ''} aria-label="Diminuir quantidade">
+              ${ICONS.minus}
+            </button>
+            <span class="w-8 text-center font-bold text-sm text-stone-900" aria-live="polite">${draft.quantity}</span>
+            <button onclick="changeDraftQty(1)" class="w-11 h-12 flex items-center justify-center text-brand-600 hover:bg-stone-200" aria-label="Aumentar quantidade">
+              ${ICONS.plus}
+            </button>
+          </div>
+          <button onclick="confirmProductToCart()" class="flex-1 h-12 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm flex items-center justify-between shadow-sm transition">
+            <span>${state.editingCartItemId ? 'Atualizar item' : 'Adicionar'}</span>
+            <span class="font-display font-bold">${formatBRL(totalItemPrice)}</span>
+          </button>
+        </footer>
+      `;
+    }
+
+    function toggleFavorite(id) {
+      if (state.favorites.includes(id)) {
+        state.favorites = state.favorites.filter(x => x !== id);
+        showToast('Removido dos favoritos');
+      } else {
+        state.favorites.push(id);
+        showToast('Salvo nos seus favoritos!', { type: 'success' });
+      }
+      render();
+    }
+    function selectRequiredChoice(choice) {
+      state.productDraft.requiredChoice = choice;
+      state.productDraft.validationError = '';
+      render();
+    }
+    function toggleAddon(aid) {
+      const idx = state.productDraft.addonIds.indexOf(aid);
+      if (idx >= 0) state.productDraft.addonIds.splice(idx, 1);
+      else state.productDraft.addonIds.push(aid);
+      render();
+    }
+    function updateProductNotes(val) {
+      state.productDraft.notes = val;
+      const counter = document.querySelector('label[for="prod-notes"] + span');
+      if (counter) counter.textContent = `${val.length}/140`;
+    }
+    function changeDraftQty(delta) {
+      state.productDraft.quantity = Math.max(1, state.productDraft.quantity + delta);
+      render();
+    }
+    function confirmProductToCart() {
+      const prod = getProduct(state.selectedProductId);
+      if (!state.productDraft.requiredChoice) {
+        state.productDraft.validationError = `Por favor, selecione uma opção em "${prod.requiredOption.title}" antes de continuar.`;
+        render();
+        const reqEl = document.getElementById('required-section');
+        if (reqEl) reqEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+
+      if (state.editingCartItemId) {
+        const idx = state.cart.findIndex(c => c.cartId === state.editingCartItemId);
+        if (idx >= 0) {
+          state.cart[idx] = {
+            ...state.cart[idx],
+            requiredChoice: state.productDraft.requiredChoice,
+            addonIds: [...state.productDraft.addonIds],
+            notes: state.productDraft.notes.trim(),
+            quantity: state.productDraft.quantity
+          };
+        }
+        state.editingCartItemId = null;
+        showToast('Item atualizado no carrinho!', { type: 'success' });
+        navigate('cart');
+      } else {
+        state.cart.push({
+          cartId: 'c-' + Date.now(),
+          productId: prod.id,
+          requiredChoice: state.productDraft.requiredChoice,
+          addonIds: [...state.productDraft.addonIds],
+          notes: state.productDraft.notes.trim(),
+          quantity: state.productDraft.quantity
+        });
+        showToast(`${prod.name} adicionado ao carrinho!`, { type: 'success' });
+        navigate('menu');
+      }
+    }
+
+    // =========================================================
+    // RENDERIZAÇÃO: TELA 3 — CARRINHO
+    // =========================================================
+    function renderCartScreen() {
+      const summary = getCartSummary();
+      const suggestions = PRODUCTS.filter(p => (p.category === 'bebidas' || p.category === 'sobremesas') && !state.cart.some(c => c.productId === p.id)).slice(0, 3);
+
+      return `
+        <header class="bg-white border-b border-stone-200 px-4 py-3 flex items-center justify-between shrink-0 z-20">
+          <button onclick="navigate('menu')" class="w-11 h-11 rounded-full hover:bg-stone-100 flex items-center justify-center text-stone-800" aria-label="Voltar ao cardápio">
+            ${ICONS.arrowLeft}
+          </button>
+          <h1 class="font-display font-bold text-base text-stone-900">Seu Carrinho</h1>
+          ${state.cart.length > 0 ? `
+            <button onclick="clearCartConfirm()" class="text-xs font-semibold text-red-700 hover:bg-red-50 px-2.5 py-2 rounded-lg">Limpar</button>
+          ` : `<span class="w-11"></span>`}
+        </header>
+
+        <div id="screen-scroll" class="flex-1 overflow-y-auto pb-32 animate-view">
+          ${state.cart.length === 0 ? `
+            <!-- Estado Vazio do Carrinho -->
+            <div class="p-8 text-center mt-10">
+              <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center">
+                ${ICONS.bag}
+              </div>
+              <h2 class="font-display font-bold text-lg text-stone-900">Seu carrinho está vazio</h2>
+              <p class="text-sm text-stone-600 mt-1.5 mb-6 max-w-xs mx-auto">Explore os pratos na brasa, massas artesanais e bowls frescos do Brasa &amp; Folha.</p>
+              <button onclick="navigate('menu')" class="px-6 py-3.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm shadow-sm">
+                Explorar cardápio
+              </button>
+            </div>
+          ` : `
+            <!-- Barra de Progresso Frete Grátis -->
+            <div class="px-4 pt-4">
+              <div class="bg-leaf-50 border border-leaf-100 rounded-xl p-3">
+                ${summary.freeShippingRemaining > 0 ? `
+                  <p class="text-xs text-leaf-700 font-medium">
+                    Faltam <strong>${formatBRL(summary.freeShippingRemaining)}</strong> para ganhar <strong>entrega grátis</strong>!
+                  </p>
+                  <div class="w-full h-2 bg-leaf-100 rounded-full mt-2 overflow-hidden">
+                    <div class="h-full bg-leaf-600 rounded-full transition-all" style="width: ${Math.min(100, (summary.subtotal / 100) * 100)}%"></div>
+                  </div>
+                ` : `
+                  <p class="text-xs text-leaf-700 font-bold flex items-center gap-1.5">
+                    ${ICONS.check} Parabéns! Você ganhou entrega grátis neste pedido.
+                  </p>
+                `}
+              </div>
+            </div>
+
+            <!-- Lista de Itens -->
+            <section class="px-4 pt-4 space-y-3">
+              ${state.cart.map(item => {
+                const prod = getProduct(item.productId);
+                if (!prod) return '';
+                const unitPrice = getCartItemUnitPrice(item);
+                const addonNames = item.addonIds.map(aid => prod.addons.find(a => a.id === aid)?.name).filter(Boolean);
+                return `
+                  <article class="bg-white rounded-2xl border border-stone-200 p-3.5 shadow-sm">
+                    <div class="flex gap-3">
+                      <img src="${prod.image}" alt="${prod.name}" onerror="this.src='${fallbackImg(prod.name)}'" class="w-16 h-16 rounded-xl object-cover shrink-0 bg-stone-100" />
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-start justify-between gap-2">
+                          <h2 class="font-display font-bold text-sm text-stone-900 leading-snug">${prod.name}</h2>
+                          <span class="font-bold text-sm text-stone-900 shrink-0">${formatBRL(unitPrice * item.quantity)}</span>
+                        </div>
+                        <p class="text-xs text-stone-600 mt-1">• ${item.requiredChoice}</p>
+                        ${addonNames.length ? `<p class="text-xs text-stone-500 mt-0.5">+ ${addonNames.join(', ')}</p>` : ''}
+                        ${item.notes ? `<p class="text-xs text-amber-800 bg-amber-50 px-2 py-1 rounded-md mt-1.5 italic">"${item.notes}"</p>` : ''}
+                      </div>
+                    </div>
+
+                    <div class="mt-3 pt-3 border-t border-stone-100 flex items-center justify-between">
+                      <div class="flex items-center gap-2">
+                        <button onclick="openProduct('${prod.id}', '${item.cartId}')" class="min-h-[38px] px-3 rounded-lg text-xs font-semibold text-stone-700 hover:bg-stone-100 inline-flex items-center gap-1">
+                          ${ICONS.edit} Editar
+                        </button>
+                        <button onclick="removeCartItem('${item.cartId}')" class="min-h-[38px] px-3 rounded-lg text-xs font-semibold text-red-700 hover:bg-red-50 inline-flex items-center gap-1" aria-label="Remover ${prod.name}">
+                          ${ICONS.trash} Excluir
+                        </button>
+                      </div>
+                      <div class="flex items-center border border-stone-200 rounded-lg bg-stone-50">
+                        <button onclick="updateCartQty('${item.cartId}', -1)" class="w-9 h-9 flex items-center justify-center text-stone-700 hover:bg-stone-200 rounded-l-lg" aria-label="Diminuir quantidade">${ICONS.minus}</button>
+                        <span class="w-7 text-center text-xs font-bold text-stone-900">${item.quantity}</span>
+                        <button onclick="updateCartQty('${item.cartId}', 1)" class="w-9 h-9 flex items-center justify-center text-brand-600 hover:bg-stone-200 rounded-r-lg" aria-label="Aumentar quantidade">${ICONS.plus}</button>
+                      </div>
+                    </div>
+                  </article>
+                `;
+              }).join('')}
+
+              <button onclick="navigate('menu')" class="w-full py-3 rounded-xl border border-dashed border-stone-300 text-brand-600 font-semibold text-sm hover:bg-brand-50 transition">
+                + Adicionar mais itens
+              </button>
+            </section>
+
+            <!-- Sugestões Rápidas -->
+            ${suggestions.length > 0 ? `
+              <section class="pt-5">
+                <h2 class="px-4 font-display font-bold text-sm text-stone-900 mb-2.5">Que tal acompanhar?</h2>
+                <div class="flex gap-2.5 overflow-x-auto no-scrollbar px-4 pb-1">
+                  ${suggestions.map(s => `
+                    <div class="w-44 shrink-0 bg-white rounded-xl border border-stone-200 p-2.5 flex flex-col justify-between">
+                      <div class="flex gap-2 items-center mb-2">
+                        <img src="${s.image}" alt="${s.name}" onerror="this.src='${fallbackImg(s.name)}'" class="w-11 h-11 rounded-lg object-cover shrink-0" />
+                        <p class="text-xs font-semibold text-stone-900 line-clamp-2">${s.name}</p>
+                      </div>
+                      <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-brand-600">${formatBRL(s.price)}</span>
+                        <button onclick="quickAddProduct('${s.id}')" class="px-2.5 py-1.5 rounded-lg bg-brand-50 text-brand-700 hover:bg-brand-100 text-xs font-bold">+ Add</button>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              </section>
+            ` : ''}
+
+            <!-- Resumo de Valores -->
+            <section class="px-4 pt-5">
+              <div class="bg-white rounded-2xl border border-stone-200 p-4 space-y-2 text-sm">
+                <div class="flex justify-between text-stone-600">
+                  <span>Subtotal (${summary.itemCount} ${summary.itemCount === 1 ? 'item' : 'itens'})</span>
+                  <span>${formatBRL(summary.subtotal)}</span>
+                </div>
+                <div class="flex justify-between text-stone-600">
+                  <span>Taxa de entrega</span>
+                  <span class="${summary.deliveryFee === 0 ? 'text-leaf-600 font-bold' : ''}">${summary.deliveryFee === 0 ? 'Grátis' : formatBRL(summary.deliveryFee)}</span>
+                </div>
+                ${summary.discount > 0 ? `
+                  <div class="flex justify-between text-leaf-600 font-medium">
+                    <span>Desconto (${state.appliedCoupon.code})</span>
+                    <span>- ${formatBRL(summary.discount)}</span>
+                  </div>
+                ` : ''}
+                <div class="pt-2.5 border-t border-stone-200 flex justify-between font-display font-bold text-base text-stone-900">
+                  <span>Total</span>
+                  <span>${formatBRL(summary.total)}</span>
+                </div>
+              </div>
+            </section>
+          `}
+        </div>
+
+        ${state.cart.length > 0 ? `
+          <footer class="bg-white border-t border-stone-200 p-4 shrink-0 z-20">
+            <button onclick="navigate('address')" class="w-full h-12 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm flex items-center justify-between px-5 shadow-sm transition">
+              <span>Continuar para entrega</span>
+              <span class="font-display font-bold">${formatBRL(summary.total)}</span>
+            </button>
+          </footer>
+        ` : ''}
+      `;
+    }
+
+    function updateCartQty(cartId, delta) {
+      const item = state.cart.find(c => c.cartId === cartId);
+      if (!item) return;
+      if (item.quantity + delta <= 0) {
+        removeCartItem(cartId);
+        return;
+      }
+      item.quantity += delta;
+      render();
+    }
+
+    function removeCartItem(cartId) {
+      const idx = state.cart.findIndex(c => c.cartId === cartId);
+      if (idx < 0) return;
+      const [removed] = state.cart.splice(idx, 1);
+      state.lastRemovedItem = { item: removed, idx };
+      render();
+      showToast('Item removido do carrinho.', {
+        actionLabel: 'Desfazer',
+        onAction: () => {
+          if (state.lastRemovedItem) {
+            state.cart.splice(state.lastRemovedItem.idx, 0, state.lastRemovedItem.item);
+            state.lastRemovedItem = null;
+            render();
+          }
+        }
+      });
+    }
+
+    function clearCartConfirm() {
+      const backup = [...state.cart];
+      state.cart = [];
+      render();
+      showToast('Carrinho esvaziado.', {
+        actionLabel: 'Desfazer',
+        onAction: () => {
+          state.cart = backup;
+          render();
+        }
+      });
+    }
+
+    function quickAddProduct(productId) {
+      const prod = getProduct(productId);
+      if (!prod) return;
+      state.cart.push({
+        cartId: 'c-' + Date.now(),
+        productId: prod.id,
+        requiredChoice: prod.requiredOption.choices[0],
+        addonIds: [],
+        notes: '',
+        quantity: 1
+      });
+      showToast(`${prod.name} adicionado!`, { type: 'success' });
+      render();
+    }
+
+    // =========================================================
+    // RENDERIZAÇÃO: TELA 4 — ENDEREÇO DE ENTREGA
+    // =========================================================
+    function renderAddressScreen() {
+      const editingAddr = state.editingAddressId ? state.addresses.find(a => a.id === state.editingAddressId) : null;
+      const errs = state.addressFormErrors || {};
+
+      return `
+        <header class="bg-white border-b border-stone-200 px-4 py-3 flex items-center justify-between shrink-0 z-20">
+          <button onclick="navigate('${state.cart.length ? 'cart' : 'menu'}')" class="w-11 h-11 rounded-full hover:bg-stone-100 flex items-center justify-center text-stone-800" aria-label="Voltar">
+            ${ICONS.arrowLeft}
+          </button>
+          <div class="text-center">
+            <h1 class="font-display font-bold text-base text-stone-900">Endereço de Entrega</h1>
+            <p class="text-[11px] text-stone-500">Etapa 1 de 2 do checkout</p>
+          </div>
+          <span class="w-11"></span>
+        </header>
+
+        <div id="screen-scroll" class="flex-1 overflow-y-auto p-4 pb-28 space-y-4 animate-view">
+          ${!state.showAddressForm ? `
+            <!-- Lista de Endereços Salvos -->
+            <section class="space-y-3" role="radiogroup" aria-label="Endereços salvos">
+              <div class="flex items-center justify-between">
+                <h2 class="font-display font-bold text-sm text-stone-900">Onde devemos entregar?</h2>
+                <span class="text-xs text-stone-500">${state.addresses.length} salvos</span>
+              </div>
+
+              ${state.addresses.map(addr => {
+                const selected = addr.id === state.selectedAddressId;
+                return `
+                  <div
+                    onclick="selectAddress('${addr.id}')"
+                    role="radio"
+                    aria-checked="${selected}"
+                    tabindex="0"
+                    class="bg-white rounded-2xl border-2 p-4 cursor-pointer transition ${selected ? 'border-brand-600 bg-brand-50/30 shadow-sm' : 'border-stone-200 hover:border-stone-300'}"
+                  >
+                    <div class="flex items-start justify-between gap-3">
+                      <div class="flex items-start gap-3">
+                        <span class="mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${selected ? 'border-brand-600 bg-brand-600' : 'border-stone-300'}">
+                          ${selected ? '<span class="w-2 h-2 rounded-full bg-white"></span>' : ''}
+                        </span>
+                        <div>
+                          <div class="flex items-center gap-2">
+                            <span class="font-display font-bold text-sm text-stone-900">${addr.label}</span>
+                            <span class="text-[11px] font-semibold bg-stone-100 text-stone-700 px-2 py-0.5 rounded-full">${addr.eta} • ${formatBRL(addr.fee)}</span>
+                          </div>
+                          <p class="text-sm text-stone-800 mt-1">${addr.street}, ${addr.number}${addr.complement ? ' — ' + addr.complement : ''}</p>
+                          <p class="text-xs text-stone-500">${addr.neighborhood} • CEP ${addr.cep}</p>
+                          ${addr.reference ? `<p class="text-xs text-stone-600 mt-1.5"><strong>Ref.:</strong> ${addr.reference}</p>` : ''}
+                          ${addr.instructions ? `<p class="text-xs text-leaf-700 bg-leaf-50 px-2.5 py-1 rounded-lg mt-1.5 inline-block">Entregador: ${addr.instructions}</p>` : ''}
+                        </div>
+                      </div>
+                      <button onclick="event.stopPropagation(); openAddressForm('${addr.id}')" class="w-9 h-9 rounded-lg hover:bg-stone-100 text-stone-600 flex items-center justify-center shrink-0" aria-label="Editar endereço ${addr.label}">
+                        ${ICONS.edit}
+                      </button>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+
+              <button onclick="openAddressForm(null)" class="w-full py-3.5 rounded-xl border-2 border-dashed border-stone-300 text-brand-600 font-semibold text-sm hover:bg-brand-50 transition">
+                + Cadastrar novo endereço
+              </button>
+            </section>
+          ` : `
+            <!-- Formulário de Cadastro / Edição de Endereço -->
+            <form onsubmit="saveAddressForm(event)" novalidate class="bg-white rounded-2xl border border-stone-200 p-4 space-y-3.5">
+              <div class="flex items-center justify-between pb-2 border-b border-stone-100">
+                <h2 class="font-display font-bold text-base text-stone-900">${editingAddr ? 'Editar endereço' : 'Novo endereço'}</h2>
+                <button type="button" onclick="cancelAddressForm()" class="text-xs font-semibold text-stone-500 hover:text-stone-800 px-2 py-1">Cancelar</button>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-stone-700 mb-1.5">Apelido do local</label>
+                <div class="flex gap-2">
+                  ${['Casa', 'Trabalho', 'Outro'].map(lbl => `
+                    <label class="flex-1 cursor-pointer">
+                      <input type="radio" name="addrLabel" value="${lbl}" ${(editingAddr?.label || 'Casa') === lbl ? 'checked' : ''} class="peer sr-only" />
+                      <span class="block text-center py-2.5 rounded-xl border border-stone-200 text-xs font-semibold peer-checked:border-brand-600 peer-checked:bg-brand-50 peer-checked:text-brand-700">${lbl}</span>
+                    </label>
+                  `).join('')}
+                </div>
+              </div>
+
+              <div>
+                <label for="f-cep" class="block text-xs font-semibold text-stone-700 mb-1">CEP *</label>
+                <div class="flex gap-2">
+                  <input id="f-cep" type="text" value="${editingAddr?.cep || ''}" placeholder="14160-000" class="flex-1 px-3.5 py-2.5 rounded-xl border ${errs.cep ? 'border-red-600 bg-red-50/40' : 'border-stone-300'} text-sm" />
+                  <button type="button" onclick="autoFillCep()" class="px-3.5 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold shrink-0">Buscar CEP</button>
+                </div>
+                ${errs.cep ? `<p class="text-xs text-red-700 mt-1 flex items-center gap-1">${ICONS.alert} ${errs.cep}</p>` : ''}
+              </div>
+
+              <div class="grid grid-cols-3 gap-2.5">
+                <div class="col-span-2">
+                  <label for="f-street" class="block text-xs font-semibold text-stone-700 mb-1">Rua / Avenida *</label>
+                  <input id="f-street" type="text" value="${editingAddr?.street || ''}" placeholder="Ex: Rua das Flores" class="w-full px-3.5 py-2.5 rounded-xl border ${errs.street ? 'border-red-600 bg-red-50/40' : 'border-stone-300'} text-sm" />
+                  ${errs.street ? `<p class="text-xs text-red-700 mt-1">${errs.street}</p>` : ''}
+                </div>
+                <div>
+                  <label for="f-number" class="block text-xs font-semibold text-stone-700 mb-1">Número *</label>
+                  <input id="f-number" type="text" value="${editingAddr?.number || ''}" placeholder="123" class="w-full px-3.5 py-2.5 rounded-xl border ${errs.number ? 'border-red-600 bg-red-50/40' : 'border-stone-300'} text-sm" />
+                  ${errs.number ? `<p class="text-xs text-red-700 mt-1">${errs.number}</p>` : ''}
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label for="f-neighborhood" class="block text-xs font-semibold text-stone-700 mb-1">Bairro *</label>
+                  <input id="f-neighborhood" type="text" value="${editingAddr?.neighborhood || ''}" placeholder="Centro" class="w-full px-3.5 py-2.5 rounded-xl border ${errs.neighborhood ? 'border-red-600 bg-red-50/40' : 'border-stone-300'} text-sm" />
+                  ${errs.neighborhood ? `<p class="text-xs text-red-700 mt-1">${errs.neighborhood}</p>` : ''}
+                </div>
+                <div>
+                  <label for="f-comp" class="block text-xs font-semibold text-stone-700 mb-1">Complemento</label>
+                  <input id="f-comp" type="text" value="${editingAddr?.complement || ''}" placeholder="Apto, bloco..." class="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-sm" />
+                </div>
+              </div>
+
+              <div>
+                <label for="f-ref" class="block text-xs font-semibold text-stone-700 mb-1">Ponto de referência</label>
+                <input id="f-ref" type="text" value="${editingAddr?.reference || ''}" placeholder="Ex: Próximo à praça principal" class="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-sm" />
+              </div>
+
+              <div>
+                <label for="f-inst" class="block text-xs font-semibold text-stone-700 mb-1">Instruções ao entregador</label>
+                <div class="flex flex-wrap gap-1.5 mb-2">
+                  ${['Deixar na portaria', 'Tocar interfone', 'Ligar ao chegar'].map(chip => `
+                    <button type="button" onclick="setInstructionChip('${chip}')" class="px-2.5 py-1 rounded-full bg-stone-100 hover:bg-brand-50 hover:text-brand-700 text-[11px] font-medium text-stone-700">${chip}</button>
+                  `).join('')}
+                </div>
+                <input id="f-inst" type="text" value="${editingAddr?.instructions || ''}" placeholder="Ex: Interfone 42, não precisa subir" class="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-sm" />
+              </div>
+
+              <button type="submit" class="w-full h-12 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm shadow-sm">
+                Salvar e selecionar endereço
+              </button>
+            </form>
+          `}
+        </div>
+
+        ${!state.showAddressForm ? `
+          <footer class="bg-white border-t border-stone-200 p-4 shrink-0 z-20">
+            <button onclick="navigate('checkout')" class="w-full h-12 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm shadow-sm transition">
+              Continuar para pagamento
+            </button>
+          </footer>
+        ` : ''}
+      `;
+    }
+
+    function selectAddress(id) { state.selectedAddressId = id; render(); }
+    function openAddressForm(id) { state.editingAddressId = id; state.showAddressForm = true; state.addressFormErrors = {}; render(); }
+    function cancelAddressForm() { state.showAddressForm = false; state.editingAddressId = null; state.addressFormErrors = {}; render(); }
+    function setInstructionChip(text) { const el = document.getElementById('f-inst'); if (el) el.value = text; }
+    function autoFillCep() {
+      const cepEl = document.getElementById('f-cep');
+      if (!cepEl.value.trim()) cepEl.value = '14160-120';
+      document.getElementById('f-street').value = 'Rua Expedicionário Solano';
+      document.getElementById('f-neighborhood').value = 'Centro';
+      showToast('Endereço preenchido pelo CEP!', { type: 'success' });
+    }
+    function saveAddressForm(e) {
+      e.preventDefault();
+      const cep = document.getElementById('f-cep').value.trim();
+      const street = document.getElementById('f-street').value.trim();
+      const number = document.getElementById('f-number').value.trim();
+      const neighborhood = document.getElementById('f-neighborhood').value.trim();
+      const complement = document.getElementById('f-comp').value.trim();
+      const reference = document.getElementById('f-ref').value.trim();
+      const instructions = document.getElementById('f-inst').value.trim();
+      const label = document.querySelector('input[name="addrLabel"]:checked')?.value || 'Casa';
+
+      const errors = {};
+      if (!cep || cep.replace(/\D/g, '').length < 8) errors.cep = 'Informe um CEP válido com 8 dígitos.';
+      if (!street) errors.street = 'Informe o nome da rua.';
+      if (!number) errors.number = 'Obrigatório.';
+      if (!neighborhood) errors.neighborhood = 'Informe o bairro.';
+
+      if (Object.keys(errors).length > 0) {
+        state.addressFormErrors = errors;
+        render();
+        return;
+      }
+
+      if (state.editingAddressId) {
+        const idx = state.addresses.findIndex(a => a.id === state.editingAddressId);
+        if (idx >= 0) {
+          state.addresses[idx] = { ...state.addresses[idx], label, cep, street, number, complement, neighborhood, reference, instructions };
+          state.selectedAddressId = state.addresses[idx].id;
+        }
+      } else {
+        const newAddr = {
+          id: 'addr-' + Date.now(),
+          label, cep, street, number, complement, neighborhood, reference, instructions,
+          fee: 8.50, eta: '30–40 min'
+        };
+        state.addresses.push(newAddr);
+        state.selectedAddressId = newAddr.id;
+      }
+
+      state.showAddressForm = false;
+      state.editingAddressId = null;
+      state.addressFormErrors = {};
+      showToast('Endereço salvo com sucesso!', { type: 'success' });
+      render();
+    }
+
+    // =========================================================
+    // RENDERIZAÇÃO: TELA 5 — PAGAMENTO E REVISÃO
+    // =========================================================
+    function renderCheckoutScreen() {
+      const addr = getSelectedAddress();
+      const summary = getCartSummary();
+      const errs = state.checkoutErrors || {};
+
+      return `
+        <header class="bg-white border-b border-stone-200 px-4 py-3 flex items-center justify-between shrink-0 z-20">
+          <button onclick="navigate('address')" class="w-11 h-11 rounded-full hover:bg-stone-100 flex items-center justify-center text-stone-800" aria-label="Voltar para endereço">
+            ${ICONS.arrowLeft}
+          </button>
+          <div class="text-center">
+            <h1 class="font-display font-bold text-base text-stone-900">Pagamento e Revisão</h1>
+            <p class="text-[11px] text-stone-500">Etapa 2 de 2 • Confira antes de enviar</p>
+          </div>
+          <span class="w-11"></span>
+        </header>
+
+        <div id="screen-scroll" class="flex-1 overflow-y-auto p-4 pb-32 space-y-4 animate-view">
+          <!-- Identificação rápida (sem burocracia) -->
+          <section class="bg-white rounded-2xl border border-stone-200 p-4">
+            <div class="flex items-center justify-between mb-2.5">
+              <h2 class="font-display font-bold text-sm text-stone-900">Quem vai receber?</h2>
+              ${state.user.loggedIn ? `<button onclick="openQuickAuthModal()" class="text-xs font-semibold text-brand-600">Alterar</button>` : ''}
+            </div>
+            ${state.user.loggedIn ? `
+              <p class="text-sm font-medium text-stone-800">${state.user.name}</p>
+              <p class="text-xs text-stone-500">WhatsApp: ${state.user.phone}</p>
+            ` : `
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div>
+                  <label for="chk-name" class="block text-xs font-semibold text-stone-700 mb-1">Seu nome *</label>
+                  <input id="chk-name" type="text" value="${state.user.name}" oninput="state.user.name=this.value" placeholder="Ex: Marina Oliveira" class="w-full px-3 py-2.5 rounded-xl border ${errs.name ? 'border-red-600 bg-red-50/40' : 'border-stone-300'} text-sm" />
+                  ${errs.name ? `<p class="text-xs text-red-700 mt-1">${errs.name}</p>` : ''}
+                </div>
+                <div>
+                  <label for="chk-phone" class="block text-xs font-semibold text-stone-700 mb-1">Celular / WhatsApp *</label>
+                  <input id="chk-phone" type="tel" value="${state.user.phone}" oninput="state.user.phone=this.value" placeholder="(16) 99123-4567" class="w-full px-3 py-2.5 rounded-xl border ${errs.phone ? 'border-red-600 bg-red-50/40' : 'border-stone-300'} text-sm" />
+                  ${errs.phone ? `<p class="text-xs text-red-700 mt-1">${errs.phone}</p>` : ''}
+                </div>
+              </div>
+            `}
+          </section>
+
+          <!-- Revisão do Endereço -->
+          <section class="bg-white rounded-2xl border border-stone-200 p-4 flex items-start justify-between gap-3">
+            <div class="flex items-start gap-2.5">
+              <span class="w-9 h-9 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center shrink-0">${ICONS.mapPin}</span>
+              <div>
+                <p class="text-xs font-bold text-stone-500 uppercase">Entrega (${addr.eta})</p>
+                <p class="text-sm font-bold text-stone-900">${addr.street}, ${addr.number}</p>
+                <p class="text-xs text-stone-600">${addr.neighborhood}${addr.complement ? ' • ' + addr.complement : ''}</p>
+              </div>
+            </div>
+            <button onclick="navigate('address')" class="text-xs font-semibold text-brand-600 hover:underline shrink-0 py-1">Alterar</button>
+          </section>
+
+          <!-- Forma de Pagamento -->
+          <section class="bg-white rounded-2xl border border-stone-200 p-4 space-y-2.5">
+            <h2 class="font-display font-bold text-sm text-stone-900 mb-1">Forma de pagamento</h2>
+
+            <!-- Pix -->
+            <button type="button" onclick="setPaymentMethod('pix')" class="w-full p-3.5 rounded-xl border-2 text-left flex items-center justify-between transition ${state.paymentMethod === 'pix' ? 'border-brand-600 bg-brand-50/40' : 'border-stone-200 hover:bg-stone-50'}">
+              <div class="flex items-center gap-3">
+                <span class="w-10 h-10 rounded-xl bg-leaf-50 text-leaf-600 flex items-center justify-center">${ICONS.pix}</span>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-bold text-stone-900">Pix</span>
+                    <span class="text-[10px] font-bold bg-leaf-100 text-leaf-700 px-2 py-0.5 rounded-full">Mais rápido</span>
+                  </div>
+                  <p class="text-xs text-stone-500">Código Copia e Cola gerado na hora</p>
+                </div>
+              </div>
+              <span class="w-5 h-5 rounded-full border-2 flex items-center justify-center ${state.paymentMethod === 'pix' ? 'border-brand-600 bg-brand-600' : 'border-stone-300'}">
+                ${state.paymentMethod === 'pix' ? '<span class="w-2 h-2 rounded-full bg-white"></span>' : ''}
+              </span>
+            </button>
+
+            <!-- Cartão Online -->
+            <button type="button" onclick="setPaymentMethod('card')" class="w-full p-3.5 rounded-xl border-2 text-left flex items-center justify-between transition ${state.paymentMethod === 'card' ? 'border-brand-600 bg-brand-50/40' : 'border-stone-200 hover:bg-stone-50'}">
+              <div class="flex items-center gap-3">
+                <span class="w-10 h-10 rounded-xl bg-stone-100 text-stone-700 flex items-center justify-center">${ICONS.card}</span>
+                <div>
+                  <span class="text-sm font-bold text-stone-900 block">Cartão de Crédito</span>
+                  <p class="text-xs text-stone-500">Mastercard final •••• 4821</p>
+                </div>
+              </div>
+              <span class="w-5 h-5 rounded-full border-2 flex items-center justify-center ${state.paymentMethod === 'card' ? 'border-brand-600 bg-brand-600' : 'border-stone-300'}">
+                ${state.paymentMethod === 'card' ? '<span class="w-2 h-2 rounded-full bg-white"></span>' : ''}
+              </span>
+            </button>
+
+            <!-- Pagamento na Entrega -->
+            <div class="rounded-xl border-2 transition ${state.paymentMethod === 'delivery' ? 'border-brand-600 bg-brand-50/30' : 'border-stone-200'}">
+              <button type="button" onclick="setPaymentMethod('delivery')" class="w-full p-3.5 text-left flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <span class="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">${ICONS.cash}</span>
+                  <div>
+                    <span class="text-sm font-bold text-stone-900 block">Pagar na entrega</span>
+                    <p class="text-xs text-stone-500">Maquininha (crédito/débito/VR) ou dinheiro</p>
+                  </div>
+                </div>
+                <span class="w-5 h-5 rounded-full border-2 flex items-center justify-center ${state.paymentMethod === 'delivery' ? 'border-brand-600 bg-brand-600' : 'border-stone-300'}">
+                  ${state.paymentMethod === 'delivery' ? '<span class="w-2 h-2 rounded-full bg-white"></span>' : ''}
+                </span>
+              </button>
+              ${state.paymentMethod === 'delivery' ? `
+                <div class="px-3.5 pb-3.5 pt-1 border-t border-stone-200/70 space-y-2.5">
+                  <div class="flex gap-2">
+                    <button type="button" onclick="state.deliveryPayType='maquininha';render()" class="flex-1 py-2 rounded-lg text-xs font-semibold border ${state.deliveryPayType === 'maquininha' ? 'bg-stone-900 text-white border-stone-900' : 'bg-white text-stone-700 border-stone-300'}">Maquininha</button>
+                    <button type="button" onclick="state.deliveryPayType='dinheiro';render()" class="flex-1 py-2 rounded-lg text-xs font-semibold border ${state.deliveryPayType === 'dinheiro' ? 'bg-stone-900 text-white border-stone-900' : 'bg-white text-stone-700 border-stone-300'}">Dinheiro</button>
+                  </div>
+                  ${state.deliveryPayType === 'dinheiro' ? `
+                    <div>
+                      <label for="troco-input" class="block text-xs font-semibold text-stone-700 mb-1">Precisa de troco para quanto? (opcional)</label>
+                      <input id="troco-input" type="text" value="${state.changeFor}" oninput="state.changeFor=this.value" placeholder="Ex: R$ 100,00" class="w-full px-3 py-2 rounded-lg border border-stone-300 bg-white text-sm" />
+                    </div>
+                  ` : ''}
+                </div>
+              ` : ''}
+            </div>
+          </section>
+
+          <!-- Cupom Promocional -->
+          <section class="bg-white rounded-2xl border border-stone-200 p-4">
+            <label for="coupon-input" class="font-display font-bold text-sm text-stone-900 block mb-1">Cupom de desconto (opcional)</label>
+            <p class="text-xs text-stone-500 mb-2.5">Teste: <button type="button" onclick="fillCoupon('BEMVINDO10')" class="font-mono font-bold text-brand-600 underline">BEMVINDO10</button> ou <button type="button" onclick="fillCoupon('FRETEGRATIS')" class="font-mono font-bold text-brand-600 underline">FRETEGRATIS</button></p>
+            <div class="flex gap-2">
+              <input id="coupon-input" type="text" value="${state.couponCode}" oninput="state.couponCode=this.value.toUpperCase()" placeholder="Digite o código" class="flex-1 px-3.5 py-2.5 rounded-xl border border-stone-300 text-sm uppercase font-mono" />
+              <button type="button" onclick="applyCoupon()" class="px-4 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold">Aplicar</button>
+            </div>
+            ${state.couponError ? `<p class="text-xs text-red-700 mt-1.5 flex items-center gap-1">${ICONS.alert} ${state.couponError}</p>` : ''}
+            ${state.appliedCoupon ? `
+              <div class="mt-2.5 p-2.5 rounded-xl bg-leaf-50 border border-leaf-100 flex items-center justify-between text-xs text-leaf-700">
+                <span class="font-semibold">${ICONS.check} Cupom <strong>${state.appliedCoupon.code}</strong> aplicado (${state.appliedCoupon.label})</span>
+                <button type="button" onclick="removeCoupon()" class="text-stone-500 underline ml-2">Remover</button>
+              </div>
+            ` : ''}
+          </section>
+
+          <!-- Revisão Final do Pedido -->
+          <section class="bg-white rounded-2xl border border-stone-200 p-4 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <h2 class="font-display font-bold text-sm text-stone-900">Resumo do pedido</h2>
+              <button onclick="navigate('cart')" class="text-xs font-semibold text-brand-600">Editar itens</button>
+            </div>
+            <div class="space-y-1.5 pb-2.5 border-b border-stone-100">
+              ${state.cart.map(item => {
+                const prod = getProduct(item.productId);
+                return `
+                  <div class="flex justify-between text-xs text-stone-700">
+                    <span><strong>${item.quantity}x</strong> ${prod.name} (${item.requiredChoice})</span>
+                    <span class="font-medium shrink-0 ml-2">${formatBRL(getCartItemUnitPrice(item) * item.quantity)}</span>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+            <div class="space-y-1.5 text-sm">
+              <div class="flex justify-between text-stone-600"><span>Subtotal</span><span>${formatBRL(summary.subtotal)}</span></div>
+              <div class="flex justify-between text-stone-600">
+                <span>Taxa de entrega</span>
+                <span class="${summary.deliveryFee === 0 ? 'text-leaf-600 font-bold' : ''}">${summary.deliveryFee === 0 ? 'Grátis' : formatBRL(summary.deliveryFee)}</span>
+              </div>
+              ${summary.discount > 0 ? `<div class="flex justify-between text-leaf-600 font-medium"><span>Desconto</span><span>- ${formatBRL(summary.discount)}</span></div>` : ''}
+              <div class="pt-2 border-t border-stone-200 flex justify-between font-display font-bold text-base text-stone-900">
+                <span>Total a pagar</span>
+                <span>${formatBRL(summary.total)}</span>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <footer class="bg-white border-t border-stone-200 p-4 shrink-0 z-20">
+          <button onclick="placeOrder()" ${state.loading ? 'disabled' : ''} class="w-full h-12 rounded-xl bg-brand-600 hover:bg-brand-700 disabled:opacity-70 text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-sm transition">
+            ${state.loading ? `
+              <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+              <span>Confirmando com a cozinha...</span>
+            ` : `
+              <span>Confirmar pedido • ${formatBRL(summary.total)}</span>
+            `}
+          </button>
+        </footer>
+      `;
+    }
+
+    function setPaymentMethod(m) { state.paymentMethod = m; render(); }
+    function fillCoupon(code) { state.couponCode = code; applyCoupon(); }
+    function applyCoupon() {
+      const code = state.couponCode.trim().toUpperCase();
+      state.couponError = '';
+      if (code === 'BEMVINDO10') {
+        state.appliedCoupon = { code, type: 'percent', value: 10, label: '10% OFF' };
+        showToast('Cupom de 10% aplicado!', { type: 'success' });
+      } else if (code === 'FRETEGRATIS') {
+        state.appliedCoupon = { code, type: 'free_shipping', value: 0, label: 'Entrega Grátis' };
+        showToast('Cupom de frete grátis aplicado!', { type: 'success' });
+      } else {
+        state.appliedCoupon = null;
+        state.couponError = 'Cupom inválido ou expirado. Experimente BEMVINDO10.';
+      }
+      render();
+    }
+    function removeCoupon() { state.appliedCoupon = null; state.couponCode = ''; state.couponError = ''; render(); }
+
+    function placeOrder() {
+      if (state.cart.length === 0) {
+        showToast('Adicione pelo menos um item ao carrinho.', { type: 'error' });
+        navigate('menu');
+        return;
+      }
+
+      const errors = {};
+      if (!state.user.loggedIn) {
+        if (!state.user.name.trim()) errors.name = 'Informe seu nome para a entrega.';
+        if (!state.user.phone.trim()) errors.phone = 'Informe um telefone para contato.';
+      }
+      if (Object.keys(errors).length > 0) {
+        state.checkoutErrors = errors;
+        render();
+        document.getElementById('screen-scroll')?.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+
+      state.checkoutErrors = {};
+      state.user.loggedIn = true;
+      state.loading = true;
+      render();
+
+      // Feedback de carregamento realista
+      setTimeout(() => {
+        const summary = getCartSummary();
+        const addr = getSelectedAddress();
+        const payLabel =
+          state.paymentMethod === 'pix' ? 'Pix (Aprovado)' :
+          state.paymentMethod === 'card' ? 'Crédito •••• 4821' :
+          state.deliveryPayType === 'dinheiro' ? `Dinheiro na entrega${state.changeFor ? ' (Troco p/ ' + state.changeFor + ')' : ''}` : 'Maquininha na entrega';
+
+        state.activeOrder = {
+          code: '#BF-' + Math.floor(4000 + Math.random() * 5000),
+          createdAt: 'Agora mesmo',
+          eta: addr.eta,
+          step: 1,
+          address: { ...addr },
+          paymentLabel: payLabel,
+          items: JSON.parse(JSON.stringify(state.cart)),
+          totals: summary,
+          courier: { name: 'Lucas Mendes', vehicle: 'Moto Honda CG • Placa FGH-4J21', code: state.user.phone.replace(/\D/g, '').slice(-4) || '4567' }
+        };
+        state.cart = [];
+        state.appliedCoupon = null;
+        state.couponCode = '';
+        state.rating = 0;
+        state.ratingSubmitted = false;
+        state.loading = false;
+        showToast('Pedido confirmado com sucesso!', { type: 'success' });
+        navigate('tracking');
+      }, 900);
+    }
+
+    // =========================================================
+    // RENDERIZAÇÃO: TELA 6 — ACOMPANHAMENTO DO PEDIDO
+    // =========================================================
+    function renderTrackingScreen() {
+      const order = state.activeOrder;
+      if (!order) {
+        return `
+          <header class="bg-white border-b border-stone-200 px-4 py-3 flex items-center justify-between">
+            <h1 class="font-display font-bold text-base text-stone-900">Meus Pedidos</h1>
+          </header>
+          <div class="flex-1 flex flex-col items-center justify-center p-8 text-center">
+            <div class="w-16 h-16 rounded-full bg-stone-100 text-stone-500 flex items-center justify-center mb-3">${ICONS.receipt}</div>
+            <h2 class="font-display font-bold text-lg text-stone-900">Nenhum pedido ativo</h2>
+            <p class="text-sm text-stone-600 mt-1 mb-5">Quando você finalizar um pedido, poderá acompanhar cada etapa da entrega por aqui.</p>
+            <button onclick="navigate('menu')" class="px-6 py-3 rounded-xl bg-brand-600 text-white font-semibold text-sm">Ir para o cardápio</button>
+          </div>
+          ${renderBottomNav('tracking')}
+        `;
+      }
+
+      const steps = [
+        { num: 1, title: 'Pedido confirmado', desc: 'O restaurante recebeu o seu pedido.' },
+        { num: 2, title: 'Em preparo na cozinha', desc: 'Nossos chefs estão preparando seus pratos na brasa.' },
+        { num: 3, title: 'Saiu para entrega', desc: `${order.courier.name} está a caminho do seu endereço.` },
+        { num: 4, title: 'Pedido entregue', desc: 'Bom apetite! Obrigado por pedir no Brasa & Folha.' }
+      ];
+
+      const currentStepInfo = steps[order.step - 1];
+      const bikeProgress = order.step === 1 ? 15 : order.step === 2 ? 32 : order.step === 3 ? 72 : 92;
+
+      return `
+        <header class="bg-white border-b border-stone-200 px-4 py-3 flex items-center justify-between shrink-0 z-20">
+          <button onclick="navigate('menu')" class="w-11 h-11 rounded-full hover:bg-stone-100 flex items-center justify-center text-stone-800" aria-label="Voltar ao cardápio">
+            ${ICONS.arrowLeft}
+          </button>
+          <div class="text-center">
+            <h1 class="font-display font-bold text-base text-stone-900">Pedido ${order.code}</h1>
+            <p class="text-[11px] text-stone-500">${order.createdAt}</p>
+          </div>
+          <button onclick="openSupportModal()" class="px-3 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold">Ajuda</button>
+        </header>
+
+        <div id="screen-scroll" class="flex-1 overflow-y-auto p-4 pb-24 space-y-4 animate-view">
+          <!-- Card Principal de Status -->
+          <section class="bg-white rounded-2xl border border-stone-200 p-4 shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+              <span class="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full ${order.step === 4 ? 'bg-leaf-100 text-leaf-700' : 'bg-brand-50 text-brand-700'}">
+                <span class="w-2 h-2 rounded-full ${order.step === 4 ? 'bg-leaf-600' : 'bg-brand-600 pulse-dot'}"></span>
+                ${order.step === 4 ? 'Concluído' : 'Em andamento'}
+              </span>
+              <span class="text-xs font-semibold text-stone-600">Previsão: <strong>${order.step === 4 ? 'Entregue' : order.eta}</strong></span>
+            </div>
+            <h2 class="font-display font-extrabold text-xl text-stone-900">${currentStepInfo.title}</h2>
+            <p class="text-sm text-stone-600 mt-0.5">${currentStepInfo.desc}</p>
+
+            <!-- Barra de Progresso -->
+            <div class="grid grid-cols-4 gap-1.5 mt-4">
+              ${[1, 2, 3, 4].map(n => `
+                <div class="h-2 rounded-full ${n <= order.step ? (order.step === 4 ? 'bg-leaf-600' : 'bg-brand-600') : 'bg-stone-200'} transition-all"></div>
+              `).join('')}
+            </div>
+
+            <!-- Botão interativo de demonstração de etapas -->
+            ${order.step < 4 ? `
+              <button onclick="advanceOrderStep()" class="mt-4 w-full py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-bold transition">
+                Simular próxima etapa (${order.step}/4 → ${order.step + 1}/4)
+              </button>
+            ` : ''}
+          </section>
+
+          <!-- Mapa Ilustrativo de Acompanhamento -->
+          <section class="bg-white rounded-2xl border border-stone-200 overflow-hidden">
+            <div class="relative h-36 bg-[#EFECE6] p-4 flex items-center justify-between overflow-hidden">
+              <!-- Ruas estilizadas em SVG -->
+              <svg class="absolute inset-0 w-full h-full opacity-50" viewBox="0 0 400 150" preserveAspectRatio="none">
+                <path d="M0 40 L400 40 M0 110 L400 110 M90 0 L90 150 M210 0 L210 150 M320 0 L320 150" stroke="#D6D3D1" stroke-width="6" fill="none"/>
+                <path d="M40 90 Q140 30 220 80 T360 75" stroke="#C83E2B" stroke-width="4" stroke-dasharray="7 5" fill="none"/>
+              </svg>
+              <!-- Restaurante -->
+              <div class="relative z-10 flex flex-col items-center">
+                <span class="w-9 h-9 rounded-full bg-brand-600 text-white shadow flex items-center justify-center text-xs font-bold">B&amp;F</span>
+                <span class="text-[10px] font-bold bg-white/90 px-1.5 py-0.5 rounded mt-1 text-stone-800">Cozinha</span>
+              </div>
+              <!-- Entregador animado -->
+              <div class="absolute z-20 top-1/2 -translate-y-1/2 transition-all duration-700" style="left: calc(${bikeProgress}% - 20px)">
+                <span class="w-10 h-10 rounded-full bg-stone-900 text-white shadow-lg flex items-center justify-center border-2 border-white">
+                  ${ICONS.bike}
+                </span>
+              </div>
+              <!-- Destino -->
+              <div class="relative z-10 flex flex-col items-center">
+                <span class="w-9 h-9 rounded-full bg-leaf-600 text-white shadow flex items-center justify-center">${ICONS.home}</span>
+                <span class="text-[10px] font-bold bg-white/90 px-1.5 py-0.5 rounded mt-1 text-stone-800">${order.address.label}</span>
+              </div>
+            </div>
+
+            <!-- Dados do Entregador e Código de Segurança -->
+            <div class="p-3.5 flex items-center justify-between gap-3 border-t border-stone-100">
+              <div>
+                <p class="text-xs text-stone-500">${order.step >= 3 ? 'Entregador parceiro' : 'Código de confirmação da entrega'}</p>
+                <p class="text-sm font-bold text-stone-900">${order.step >= 3 ? order.courier.name : 'Informe ao entregador na chegada'}</p>
+                ${order.step >= 3 ? `<p class="text-[11px] text-stone-500">${order.courier.vehicle}</p>` : ''}
+              </div>
+              <div class="bg-stone-100 px-3 py-2 rounded-xl text-center shrink-0">
+                <span class="text-[10px] text-stone-500 block uppercase font-semibold">Código</span>
+                <span class="font-mono font-extrabold text-base text-stone-900 tracking-wider">${order.courier.code}</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- Linha do Tempo Detalhada -->
+          <section class="bg-white rounded-2xl border border-stone-200 p-4">
+            <h3 class="font-display font-bold text-sm text-stone-900 mb-3">Histórico do pedido</h3>
+            <ol class="space-y-3">
+              ${steps.map(s => {
+                const done = s.num <= order.step;
+                const current = s.num === order.step;
+                return `
+                  <li class="flex items-start gap-3">
+                    <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5 ${done ? 'bg-leaf-600 text-white' : 'bg-stone-200 text-stone-500'}">
+                      ${done ? ICONS.check : s.num}
+                    </span>
+                    <div>
+                      <p class="text-sm ${current ? 'font-bold text-stone-900' : done ? 'font-semibold text-stone-800' : 'text-stone-400'}">${s.title}</p>
+                      <p class="text-xs ${done ? 'text-stone-600' : 'text-stone-400'}">${s.desc}</p>
+                    </div>
+                  </li>
+                `;
+              }).join('')}
+            </ol>
+          </section>
+
+          <!-- Avaliação (quando entregue) -->
+          ${order.step === 4 ? `
+            <section class="bg-leaf-50 border border-leaf-100 rounded-2xl p-4 text-center">
+              ${state.ratingSubmitted ? `
+                <p class="font-display font-bold text-sm text-leaf-700">Obrigado pela sua avaliação! ⭐</p>
+                <p class="text-xs text-leaf-700 mt-1">Seu feedback ajuda o Brasa &amp; Folha a melhorar sempre.</p>
+              ` : `
+                <h3 class="font-display font-bold text-sm text-stone-900">Como foi sua experiência?</h3>
+                <p class="text-xs text-stone-600 mt-0.5 mb-3">Avalie a comida e a entrega</p>
+                <div class="flex justify-center gap-2 mb-3">
+                  ${[1, 2, 3, 4, 5].map(n => `
+                    <button onclick="setRating(${n})" class="w-10 h-10 rounded-full ${state.rating >= n ? 'bg-amber-100 scale-105' : 'bg-white'} border border-stone-200 flex items-center justify-center text-lg transition" aria-label="${n} estrelas">
+                      ${state.rating >= n ? '★' : '☆'}
+                    </button>
+                  `).join('')}
+                </div>
+                ${state.rating > 0 ? `<button onclick="submitRating()" class="px-5 py-2 rounded-xl bg-leaf-600 text-white text-xs font-bold">Enviar avaliação</button>` : ''}
+              `}
+            </section>
+          ` : ''}
+
+          <!-- Resumo do Pedido -->
+          <section class="bg-white rounded-2xl border border-stone-200 p-4 space-y-2 text-xs">
+            <h3 class="font-display font-bold text-sm text-stone-900 mb-1">Detalhes da compra</h3>
+            <p class="text-stone-600"><strong>Endereço:</strong> ${order.address.street}, ${order.address.number} — ${order.address.neighborhood}</p>
+            <p class="text-stone-600"><strong>Pagamento:</strong> ${order.paymentLabel}</p>
+            <div class="pt-2 border-t border-stone-100 space-y-1">
+              ${order.items.map(it => {
+                const p = getProduct(it.productId);
+                return `<div class="flex justify-between text-stone-700"><span>${it.quantity}x ${p ? p.name : 'Prato'}</span><span>${formatBRL(getCartItemUnitPrice(it) * it.quantity)}</span></div>`;
+              }).join('')}
+            </div>
+            <div class="pt-2 border-t border-stone-200 flex justify-between font-bold text-sm text-stone-900">
+              <span>Total pago</span>
+              <span>${formatBRL(order.totals.total)}</span>
+            </div>
+          </section>
+
+          <!-- Ações Finais -->
+          <div class="flex gap-2.5">
+            <button onclick="openSupportModal()" class="flex-1 py-3 rounded-xl border border-stone-300 bg-white text-stone-800 font-semibold text-xs inline-flex items-center justify-center gap-1.5">
+              ${ICONS.chat} Falar com suporte
+            </button>
+            <button onclick="navigate('menu')" class="flex-1 py-3 rounded-xl bg-brand-600 text-white font-semibold text-xs">
+              Fazer novo pedido
+            </button>
+          </div>
+        </div>
+
+        ${renderBottomNav('tracking')}
+      `;
+    }
+
+    function advanceOrderStep() {
+      if (state.activeOrder && state.activeOrder.step < 4) {
+        state.activeOrder.step += 1;
+        const msgs = ['', '', 'Seu pedido entrou em preparo!', 'O entregador saiu para entrega!', 'Pedido entregue! Bom apetite!'];
+        showToast(msgs[state.activeOrder.step], { type: 'success' });
+        render();
+      }
+    }
+    function setRating(n) { state.rating = n; render(); }
+    function submitRating() { state.ratingSubmitted = true; showToast('Avaliação registrada!', { type: 'success' }); render(); }
+
+    // =========================================================
+    // NAVEGAÇÃO INFERIOR (BOTTOM TAB BAR)
+    // =========================================================
+    function renderBottomNav(active) {
+      const summary = getCartSummary();
+      return `
+        <nav class="bg-white border-t border-stone-200 h-[64px] px-2 flex items-center justify-around shrink-0 z-20" aria-label="Navegação principal">
+          <button onclick="navigate('menu')" class="flex flex-col items-center justify-center min-w-[64px] h-12 rounded-xl ${active === 'menu' ? 'text-brand-600 font-bold' : 'text-stone-500 hover:text-stone-800'}">
+            ${ICONS.home}
+            <span class="text-[11px] mt-0.5">Cardápio</span>
+          </button>
+          <button onclick="navigate('cart')" class="relative flex flex-col items-center justify-center min-w-[64px] h-12 rounded-xl ${active === 'cart' ? 'text-brand-600 font-bold' : 'text-stone-500 hover:text-stone-800'}">
+            ${ICONS.bag}
+            ${summary.itemCount > 0 ? `<span class="absolute top-1 right-3 min-w-[18px] h-[18px] px-1 rounded-full bg-brand-600 text-white text-[10px] font-bold flex items-center justify-center">${summary.itemCount}</span>` : ''}
+            <span class="text-[11px] mt-0.5">Carrinho</span>
+          </button>
+          <button onclick="navigate('tracking')" class="relative flex flex-col items-center justify-center min-w-[64px] h-12 rounded-xl ${active === 'tracking' ? 'text-brand-600 font-bold' : 'text-stone-500 hover:text-stone-800'}">
+            ${ICONS.receipt}
+            ${state.activeOrder && state.activeOrder.step < 4 ? `<span class="absolute top-1.5 right-4 w-2.5 h-2.5 rounded-full bg-leaf-600 pulse-dot"></span>` : ''}
+            <span class="text-[11px] mt-0.5">Pedido</span>
+          </button>
+          <button onclick="openQuickAuthModal()" class="flex flex-col items-center justify-center min-w-[64px] h-12 rounded-xl text-stone-500 hover:text-stone-800">
+            ${ICONS.user}
+            <span class="text-[11px] mt-0.5">${state.user.loggedIn ? 'Perfil' : 'Entrar'}</span>
+          </button>
+        </nav>
+      `;
+    }
+
+    // =========================================================
+    // LOOP PRINCIPAL DE RENDERIZAÇÃO
+    // =========================================================
+    function render() {
+      const root = document.getElementById('app-root');
+      let html = '';
+      switch (state.screen) {
+        case 'menu': html = renderMenuScreen(); break;
+        case 'product': html = renderProductScreen(); break;
+        case 'cart': html = renderCartScreen(); break;
+        case 'address': html = renderAddressScreen(); break;
+        case 'checkout': html = renderCheckoutScreen(); break;
+        case 'tracking': html = renderTrackingScreen(); break;
+        default: html = renderMenuScreen();
+      }
+      root.innerHTML = html;
+
+      // Destacar tela atual na barra IHC
+      document.querySelectorAll('.toolbar-nav').forEach(btn => {
+        const isCurrent = btn.getAttribute('data-nav') === state.screen;
+        btn.classList.toggle('bg-brand-600', isCurrent);
+        btn.classList.toggle('text-white', isCurrent);
+        btn.classList.toggle('font-semibold', isCurrent);
+      });
+    }
+
+    // Inicializa o protótipo
+    render();
+  </script>
+</body>
+</html>
